@@ -69,6 +69,9 @@ class TempNFA {
   // Adds a state and its edges to the NFA, or merges it with an existing one.
   void MergeState(int32_t state, State &&edges);
 
+  // Auxiliary method for the implementation of `CollapseEpsilonMoves`.
+  bool CollapseNextEpsilonMove();
+
   // Collapses epsilon-moves by merging states that are separated by such a move.
   //
   // REQUIRES: the automaton must be deterministic, in which case two states separated by an

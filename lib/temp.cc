@@ -70,6 +70,22 @@ void TempNFA::MergeState(int32_t const state, State &&edges) {
   }
 }
 
+bool TempNFA::CollapseNextEpsilonMove() {
+  for (auto const &[state, edges] : states_) {
+    if (!edges[0].empty()) {
+      RenameState(edges[0][0], state);
+      return true;
+    }
+  }
+  return false;
+}
+
+void TempNFA::CollapseEpsilonMoves() {
+  while (CollapseNextEpsilonMove()) {
+    // nothing to do.
+  }
+}
+
 DFA TempNFA::ToDFA() && {
   absl::flat_hash_map<int32_t, int32_t> state_map;
   DFA::States dfa_states;
@@ -97,6 +113,27 @@ DFA TempNFA::ToDFA() && {
     }
   }
   return DFA(std::move(dfa_states), state_map[initial_state_], state_map[final_state_]);
+}
+
+NFA TempNFA::ToNFA() && {
+  absl::flat_hash_map<int32_t, int32_t> state_map;
+  NFA::States nfa_states;
+  nfa_states.reserve(states_.size());
+  int32_t i = 0;
+  for (auto &[state, edges] : states_) {
+    state_map.try_emplace(state, i++);
+    nfa_states.emplace_back(std::move(edges));
+  }
+  state_map.try_emplace(initial_state_, i++);
+  state_map.try_emplace(final_state_, i++);
+  for (auto &state : nfa_states) {
+    for (auto &edge : state) {
+      for (auto &transition : edge) {
+        transition = state_map[transition];
+      }
+    }
+  }
+  return NFA(std::move(nfa_states), state_map[initial_state_], state_map[final_state_]);
 }
 
 }  // namespace re3
