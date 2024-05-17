@@ -58,13 +58,26 @@ class TempNFA {
   // edge and either there's no epsilon-move or the epsilon-move is the only one).
   bool IsDeterministic() const;
 
+  // Renames state `old_name` to `new_name`.
+  void RenameState(int32_t old_name, int32_t new_name);
+
   // Finalizes this automaton by converting it into a `DFA` object if it's deterministic or an `NFA`
   // if it's not. `next_state` is the number of the new (caller-generated) final state.
   std::unique_ptr<AutomatonInterface> Finalize() &&;
 
  private:
+  // Adds a state and its edges to the NFA, or merges it with an existing one.
+  void MergeState(int32_t state, State &&edges);
+
+  // Collapses epsilon-moves by merging states that are separated by such a move.
+  //
+  // REQUIRES: the automaton must be deterministic, in which case two states separated by an
+  // epsilon-move can't have any other edge in between.
+  void CollapseEpsilonMoves();
+
   // Finalizes this NFA by converting it to an `DFA` object, assuming the automaton is deterministic
-  // (`IsDeterministic()` must return true).
+  // (`IsDeterministic()` must return true) and has no epsilon-moves (`CollapseEpsilonMoves()` must
+  // have been called).
   DFA ToDFA() &&;
 
   // Finalizes this NFA by converting it to an `NFA` object.
