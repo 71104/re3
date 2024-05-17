@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <memory>
 #include <string_view>
+#include <utility>
 
 #include "absl/container/flat_hash_map.h"
 #include "absl/container/inlined_vector.h"
@@ -131,6 +132,67 @@ absl::StatusOr<TempNFA> Parser::Parse0() {
           },
           start, stop);
   }
+}
+
+absl::StatusOr<TempNFA> Parser::Parse1() {
+  auto status_or_nfa = Parse0();
+  if (!status_or_nfa.ok()) {
+    return status_or_nfa;
+  }
+  auto nfa = std::move(status_or_nfa).value();
+  while (!pattern_.empty() && pattern_[0] != '|' && pattern_[0] != ')') {
+    if (absl::ConsumePrefix(&pattern_, "*")) {
+      nfa.RenameState(nfa.initial_state(), nfa.final_state());
+      continue;
+    }
+    if (absl::ConsumePrefix(&pattern_, "+")) {
+      nfa.AddEdge(0, nfa.final_state(), nfa.initial_state());
+      continue;
+    }
+    if (absl::ConsumePrefix(&pattern_, "?")) {
+      nfa.AddEdge(0, nfa.initial_state(), nfa.final_state());
+      continue;
+    }
+    return nfa;
+  }
+  return nfa;
+}
+
+absl::StatusOr<TempNFA> Parser::Parse2() {
+  auto status_or_nfa = Parse1();
+  if (!status_or_nfa.ok()) {
+    return status_or_nfa;
+  }
+  auto nfa = std::move(status_or_nfa).value();
+  while (!pattern_.empty() && pattern_[0] != '|' && pattern_[0] != ')') {
+    status_or_nfa = Parse1();
+    if (!status_or_nfa.ok()) {
+      return status_or_nfa;
+    }
+    nfa.Chain(std::move(status_or_nfa).value());
+  }
+  return nfa;
+}
+
+absl::StatusOr<TempNFA> Parser::Parse3() {
+  auto status_or_nfa = Parse2();
+  if (!status_or_nfa.ok()) {
+    return status_or_nfa;
+  }
+  auto nfa = std::move(status_or_nfa).value();
+  while (!pattern_.empty() && pattern_[0] != ')') {
+    if (!absl::ConsumePrefix(&pattern_, "|")) {
+      return absl::InvalidArgumentError("expected pipe operator");
+    }
+    status_or_nfa = Parse2();
+    if (!status_or_nfa.ok()) {
+      return status_or_nfa;
+    }
+    int32_t const initial_state = next_state_++;
+    int32_t const final_state = next_state_++;
+    nfa.Merge(std::move(status_or_nfa).value(), initial_state, final_state);
+  }
+  return nfa;
 }
 
 absl::StatusOr<std::unique_ptr<AutomatonInterface>> Parser::Parse() {

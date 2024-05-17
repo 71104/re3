@@ -12,8 +12,12 @@
 
 namespace re3 {
 
+// Represents a non-deterministic finite automaton (NFA), aka a compiled regular expression.
 class NFA final : public AutomatonInterface {
  public:
+  // `State` is represented by an array of 256 edges, one for every possible input character. Each
+  // edge is an array of integers representing the states to transition to. Character 0 is used to
+  // label epsilon-moves.
   using State = std::array<absl::InlinedVector<int32_t, 1>, 256>;
   using States = std::vector<State>;
 
