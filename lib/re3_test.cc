@@ -50,6 +50,295 @@ TEST_P(ParserTest, AnotherSimpleCharacter) {
   EXPECT_FALSE(pattern->Run(""));
 }
 
+TEST_P(ParserTest, Digit) {
+  auto const status_or_pattern = Parse("\\d");
+  EXPECT_OK(status_or_pattern);
+  auto const& pattern = status_or_pattern.value();
+  EXPECT_FALSE(pattern->Run(""));
+  EXPECT_TRUE(pattern->Run("0"));
+  EXPECT_TRUE(pattern->Run("1"));
+  EXPECT_TRUE(pattern->Run("2"));
+  EXPECT_TRUE(pattern->Run("3"));
+  EXPECT_TRUE(pattern->Run("4"));
+  EXPECT_TRUE(pattern->Run("5"));
+  EXPECT_TRUE(pattern->Run("6"));
+  EXPECT_TRUE(pattern->Run("7"));
+  EXPECT_TRUE(pattern->Run("8"));
+  EXPECT_TRUE(pattern->Run("9"));
+  EXPECT_FALSE(pattern->Run("a"));
+  EXPECT_FALSE(pattern->Run("b"));
+  EXPECT_FALSE(pattern->Run("d"));
+  EXPECT_FALSE(pattern->Run("\\d"));
+  EXPECT_FALSE(pattern->Run("\\0"));
+}
+
+TEST_P(ParserTest, NotDigit) {
+  auto const status_or_pattern = Parse("\\D");
+  EXPECT_OK(status_or_pattern);
+  auto const& pattern = status_or_pattern.value();
+  EXPECT_FALSE(pattern->Run(""));
+  EXPECT_FALSE(pattern->Run("0"));
+  EXPECT_FALSE(pattern->Run("1"));
+  EXPECT_FALSE(pattern->Run("2"));
+  EXPECT_FALSE(pattern->Run("3"));
+  EXPECT_FALSE(pattern->Run("4"));
+  EXPECT_FALSE(pattern->Run("5"));
+  EXPECT_FALSE(pattern->Run("6"));
+  EXPECT_FALSE(pattern->Run("7"));
+  EXPECT_FALSE(pattern->Run("8"));
+  EXPECT_FALSE(pattern->Run("9"));
+  EXPECT_TRUE(pattern->Run("a"));
+  EXPECT_TRUE(pattern->Run("b"));
+  EXPECT_TRUE(pattern->Run("D"));
+  EXPECT_FALSE(pattern->Run("\\D"));
+  EXPECT_FALSE(pattern->Run("\\0"));
+}
+
+TEST_P(ParserTest, WordCharacter) {
+  auto const status_or_pattern = Parse("\\w");
+  EXPECT_OK(status_or_pattern);
+  auto const& pattern = status_or_pattern.value();
+  EXPECT_FALSE(pattern->Run(""));
+  EXPECT_TRUE(pattern->Run("A"));
+  EXPECT_TRUE(pattern->Run("B"));
+  EXPECT_TRUE(pattern->Run("C"));
+  EXPECT_TRUE(pattern->Run("D"));
+  EXPECT_TRUE(pattern->Run("E"));
+  EXPECT_TRUE(pattern->Run("F"));
+  EXPECT_TRUE(pattern->Run("G"));
+  EXPECT_TRUE(pattern->Run("H"));
+  EXPECT_TRUE(pattern->Run("I"));
+  EXPECT_TRUE(pattern->Run("J"));
+  EXPECT_TRUE(pattern->Run("K"));
+  EXPECT_TRUE(pattern->Run("L"));
+  EXPECT_TRUE(pattern->Run("M"));
+  EXPECT_TRUE(pattern->Run("N"));
+  EXPECT_TRUE(pattern->Run("O"));
+  EXPECT_TRUE(pattern->Run("P"));
+  EXPECT_TRUE(pattern->Run("Q"));
+  EXPECT_TRUE(pattern->Run("R"));
+  EXPECT_TRUE(pattern->Run("S"));
+  EXPECT_TRUE(pattern->Run("T"));
+  EXPECT_TRUE(pattern->Run("U"));
+  EXPECT_TRUE(pattern->Run("V"));
+  EXPECT_TRUE(pattern->Run("W"));
+  EXPECT_TRUE(pattern->Run("X"));
+  EXPECT_TRUE(pattern->Run("Y"));
+  EXPECT_TRUE(pattern->Run("Z"));
+  EXPECT_TRUE(pattern->Run("a"));
+  EXPECT_TRUE(pattern->Run("b"));
+  EXPECT_TRUE(pattern->Run("c"));
+  EXPECT_TRUE(pattern->Run("d"));
+  EXPECT_TRUE(pattern->Run("e"));
+  EXPECT_TRUE(pattern->Run("f"));
+  EXPECT_TRUE(pattern->Run("g"));
+  EXPECT_TRUE(pattern->Run("h"));
+  EXPECT_TRUE(pattern->Run("i"));
+  EXPECT_TRUE(pattern->Run("j"));
+  EXPECT_TRUE(pattern->Run("k"));
+  EXPECT_TRUE(pattern->Run("l"));
+  EXPECT_TRUE(pattern->Run("m"));
+  EXPECT_TRUE(pattern->Run("n"));
+  EXPECT_TRUE(pattern->Run("o"));
+  EXPECT_TRUE(pattern->Run("p"));
+  EXPECT_TRUE(pattern->Run("q"));
+  EXPECT_TRUE(pattern->Run("r"));
+  EXPECT_TRUE(pattern->Run("s"));
+  EXPECT_TRUE(pattern->Run("t"));
+  EXPECT_TRUE(pattern->Run("u"));
+  EXPECT_TRUE(pattern->Run("v"));
+  EXPECT_TRUE(pattern->Run("w"));
+  EXPECT_TRUE(pattern->Run("x"));
+  EXPECT_TRUE(pattern->Run("y"));
+  EXPECT_TRUE(pattern->Run("z"));
+  EXPECT_TRUE(pattern->Run("0"));
+  EXPECT_TRUE(pattern->Run("1"));
+  EXPECT_TRUE(pattern->Run("2"));
+  EXPECT_TRUE(pattern->Run("3"));
+  EXPECT_TRUE(pattern->Run("4"));
+  EXPECT_TRUE(pattern->Run("5"));
+  EXPECT_TRUE(pattern->Run("6"));
+  EXPECT_TRUE(pattern->Run("7"));
+  EXPECT_TRUE(pattern->Run("8"));
+  EXPECT_TRUE(pattern->Run("9"));
+  EXPECT_TRUE(pattern->Run("_"));
+  EXPECT_FALSE(pattern->Run("."));
+  EXPECT_FALSE(pattern->Run("-"));
+  EXPECT_FALSE(pattern->Run("\\"));
+  EXPECT_FALSE(pattern->Run("\\w"));
+}
+
+TEST_P(ParserTest, NotWordCharacter) {
+  auto const status_or_pattern = Parse("\\W");
+  EXPECT_OK(status_or_pattern);
+  auto const& pattern = status_or_pattern.value();
+  EXPECT_FALSE(pattern->Run(""));
+  EXPECT_FALSE(pattern->Run("A"));
+  EXPECT_FALSE(pattern->Run("B"));
+  EXPECT_FALSE(pattern->Run("C"));
+  EXPECT_FALSE(pattern->Run("D"));
+  EXPECT_FALSE(pattern->Run("E"));
+  EXPECT_FALSE(pattern->Run("F"));
+  EXPECT_FALSE(pattern->Run("G"));
+  EXPECT_FALSE(pattern->Run("H"));
+  EXPECT_FALSE(pattern->Run("I"));
+  EXPECT_FALSE(pattern->Run("J"));
+  EXPECT_FALSE(pattern->Run("K"));
+  EXPECT_FALSE(pattern->Run("L"));
+  EXPECT_FALSE(pattern->Run("M"));
+  EXPECT_FALSE(pattern->Run("N"));
+  EXPECT_FALSE(pattern->Run("O"));
+  EXPECT_FALSE(pattern->Run("P"));
+  EXPECT_FALSE(pattern->Run("Q"));
+  EXPECT_FALSE(pattern->Run("R"));
+  EXPECT_FALSE(pattern->Run("S"));
+  EXPECT_FALSE(pattern->Run("T"));
+  EXPECT_FALSE(pattern->Run("U"));
+  EXPECT_FALSE(pattern->Run("V"));
+  EXPECT_FALSE(pattern->Run("W"));
+  EXPECT_FALSE(pattern->Run("X"));
+  EXPECT_FALSE(pattern->Run("Y"));
+  EXPECT_FALSE(pattern->Run("Z"));
+  EXPECT_FALSE(pattern->Run("a"));
+  EXPECT_FALSE(pattern->Run("b"));
+  EXPECT_FALSE(pattern->Run("c"));
+  EXPECT_FALSE(pattern->Run("d"));
+  EXPECT_FALSE(pattern->Run("e"));
+  EXPECT_FALSE(pattern->Run("f"));
+  EXPECT_FALSE(pattern->Run("g"));
+  EXPECT_FALSE(pattern->Run("h"));
+  EXPECT_FALSE(pattern->Run("i"));
+  EXPECT_FALSE(pattern->Run("j"));
+  EXPECT_FALSE(pattern->Run("k"));
+  EXPECT_FALSE(pattern->Run("l"));
+  EXPECT_FALSE(pattern->Run("m"));
+  EXPECT_FALSE(pattern->Run("n"));
+  EXPECT_FALSE(pattern->Run("o"));
+  EXPECT_FALSE(pattern->Run("p"));
+  EXPECT_FALSE(pattern->Run("q"));
+  EXPECT_FALSE(pattern->Run("r"));
+  EXPECT_FALSE(pattern->Run("s"));
+  EXPECT_FALSE(pattern->Run("t"));
+  EXPECT_FALSE(pattern->Run("u"));
+  EXPECT_FALSE(pattern->Run("v"));
+  EXPECT_FALSE(pattern->Run("w"));
+  EXPECT_FALSE(pattern->Run("x"));
+  EXPECT_FALSE(pattern->Run("y"));
+  EXPECT_FALSE(pattern->Run("z"));
+  EXPECT_FALSE(pattern->Run("0"));
+  EXPECT_FALSE(pattern->Run("1"));
+  EXPECT_FALSE(pattern->Run("2"));
+  EXPECT_FALSE(pattern->Run("3"));
+  EXPECT_FALSE(pattern->Run("4"));
+  EXPECT_FALSE(pattern->Run("5"));
+  EXPECT_FALSE(pattern->Run("6"));
+  EXPECT_FALSE(pattern->Run("7"));
+  EXPECT_FALSE(pattern->Run("8"));
+  EXPECT_FALSE(pattern->Run("9"));
+  EXPECT_FALSE(pattern->Run("_"));
+  EXPECT_TRUE(pattern->Run("."));
+  EXPECT_TRUE(pattern->Run("-"));
+  EXPECT_TRUE(pattern->Run("\\"));
+  EXPECT_FALSE(pattern->Run("\\w"));
+}
+
+TEST_P(ParserTest, Spacing) {
+  auto const status_or_pattern = Parse("\\s");
+  EXPECT_OK(status_or_pattern);
+  auto const& pattern = status_or_pattern.value();
+  EXPECT_FALSE(pattern->Run(""));
+  EXPECT_TRUE(pattern->Run("\f"));
+  EXPECT_TRUE(pattern->Run("\n"));
+  EXPECT_TRUE(pattern->Run("\r"));
+  EXPECT_TRUE(pattern->Run("\t"));
+  EXPECT_TRUE(pattern->Run("\v"));
+  EXPECT_FALSE(pattern->Run("a"));
+  EXPECT_FALSE(pattern->Run("s"));
+  EXPECT_FALSE(pattern->Run("\\"));
+  EXPECT_FALSE(pattern->Run("\\s"));
+}
+
+TEST_P(ParserTest, NotSpacing) {
+  auto const status_or_pattern = Parse("\\S");
+  EXPECT_OK(status_or_pattern);
+  auto const& pattern = status_or_pattern.value();
+  EXPECT_FALSE(pattern->Run(""));
+  EXPECT_FALSE(pattern->Run("\f"));
+  EXPECT_FALSE(pattern->Run("\n"));
+  EXPECT_FALSE(pattern->Run("\r"));
+  EXPECT_FALSE(pattern->Run("\t"));
+  EXPECT_FALSE(pattern->Run("\v"));
+  EXPECT_TRUE(pattern->Run("a"));
+  EXPECT_TRUE(pattern->Run("s"));
+  EXPECT_TRUE(pattern->Run("\\"));
+  EXPECT_FALSE(pattern->Run("\\s"));
+}
+
+TEST_P(ParserTest, HorizontalTab) {
+  auto const status_or_pattern = Parse("\\t");
+  EXPECT_OK(status_or_pattern);
+  auto const& pattern = status_or_pattern.value();
+  EXPECT_FALSE(pattern->Run(""));
+  EXPECT_TRUE(pattern->Run("\t"));
+  EXPECT_FALSE(pattern->Run("\n"));
+  EXPECT_FALSE(pattern->Run("a"));
+  EXPECT_FALSE(pattern->Run("t"));
+  EXPECT_FALSE(pattern->Run("\\"));
+  EXPECT_FALSE(pattern->Run("\\t"));
+}
+
+TEST_P(ParserTest, CarriageReturn) {
+  auto const status_or_pattern = Parse("\\r");
+  EXPECT_OK(status_or_pattern);
+  auto const& pattern = status_or_pattern.value();
+  EXPECT_FALSE(pattern->Run(""));
+  EXPECT_TRUE(pattern->Run("\r"));
+  EXPECT_FALSE(pattern->Run("\n"));
+  EXPECT_FALSE(pattern->Run("a"));
+  EXPECT_FALSE(pattern->Run("r"));
+  EXPECT_FALSE(pattern->Run("\\"));
+  EXPECT_FALSE(pattern->Run("\\r"));
+}
+
+TEST_P(ParserTest, LineFeed) {
+  auto const status_or_pattern = Parse("\\n");
+  EXPECT_OK(status_or_pattern);
+  auto const& pattern = status_or_pattern.value();
+  EXPECT_FALSE(pattern->Run(""));
+  EXPECT_TRUE(pattern->Run("\n"));
+  EXPECT_FALSE(pattern->Run("\t"));
+  EXPECT_FALSE(pattern->Run("a"));
+  EXPECT_FALSE(pattern->Run("n"));
+  EXPECT_FALSE(pattern->Run("\\"));
+  EXPECT_FALSE(pattern->Run("\\n"));
+}
+
+TEST_P(ParserTest, VerticalTab) {
+  auto const status_or_pattern = Parse("\\v");
+  EXPECT_OK(status_or_pattern);
+  auto const& pattern = status_or_pattern.value();
+  EXPECT_FALSE(pattern->Run(""));
+  EXPECT_TRUE(pattern->Run("\v"));
+  EXPECT_FALSE(pattern->Run("\n"));
+  EXPECT_FALSE(pattern->Run("a"));
+  EXPECT_FALSE(pattern->Run("v"));
+  EXPECT_FALSE(pattern->Run("\\"));
+  EXPECT_FALSE(pattern->Run("\\v"));
+}
+
+TEST_P(ParserTest, FormFeed) {
+  auto const status_or_pattern = Parse("\\f");
+  EXPECT_OK(status_or_pattern);
+  auto const& pattern = status_or_pattern.value();
+  EXPECT_FALSE(pattern->Run(""));
+  EXPECT_TRUE(pattern->Run("\f"));
+  EXPECT_FALSE(pattern->Run("\n"));
+  EXPECT_FALSE(pattern->Run("a"));
+  EXPECT_FALSE(pattern->Run("f"));
+  EXPECT_FALSE(pattern->Run("\\"));
+  EXPECT_FALSE(pattern->Run("\\f"));
+}
+
 TEST_P(ParserTest, AnyCharacter) {
   auto const status_or_pattern = Parse(".");
   EXPECT_OK(status_or_pattern);

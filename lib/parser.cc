@@ -29,8 +29,18 @@ class Parser {
   absl::StatusOr<std::unique_ptr<AutomatonInterface>> Parse();
 
  private:
+  // Parses a hex digit. Used to parse hex escape codes.
+  static absl::StatusOr<int> ParseHexDigit(int ch);
+
+  TempNFA MakeSingleCharacterNFA(int ch);
+  TempNFA MakeCharacterClassNFA(std::string_view chars);
+  TempNFA MakeNegatedCharacterClassNFA(std::string_view chars);
+
   // Called by `Parse0` to parse character classes (i.e. square brackets).
   absl::StatusOr<TempNFA> ParseCharacterClass();
+
+  // Called by `Parse0` to parse escape codes (e.g. `\d`, `\w`, etc.).
+  absl::StatusOr<TempNFA> ParseEscape();
 
   // Parses single character, escape code, dot, round brackets, square brackets, or end of input.
   absl::StatusOr<TempNFA> Parse0();
@@ -47,6 +57,62 @@ class Parser {
   std::string_view pattern_;
   int32_t next_state_ = 0;
 };
+
+absl::StatusOr<int> Parser::ParseHexDigit(int const ch) {
+  if (ch >= '0' && ch <= '9') {
+    return ch - '0';
+  } else if (ch >= 'A' && ch <= 'F') {
+    return ch - 'A' + 10;
+  } else if (ch >= 'a' && ch <= 'f') {
+    return ch - 'a' + 10;
+  } else {
+    return absl::InvalidArgumentError("invalid hex digit");
+  }
+}
+
+TempNFA Parser::MakeSingleCharacterNFA(int const ch) {
+  int32_t const start = next_state_++;
+  int32_t const stop = next_state_++;
+  return TempNFA(
+      {
+          {start, MakeState({{ch, {stop}}})},
+          {stop, MakeState({})},
+      },
+      start, stop);
+}
+
+TempNFA Parser::MakeCharacterClassNFA(std::string_view const chars) {
+  int32_t const start = next_state_++;
+  int32_t const stop = next_state_++;
+  State state;
+  for (auto const ch : chars) {
+    state[ch].emplace_back(stop);
+  }
+  return TempNFA(
+      {
+          {start, std::move(state)},
+          {stop, MakeState({})},
+      },
+      start, stop);
+}
+
+TempNFA Parser::MakeNegatedCharacterClassNFA(std::string_view const chars) {
+  int32_t const start = next_state_++;
+  int32_t const stop = next_state_++;
+  State state;
+  for (int ch = 1; ch < 256; ++ch) {
+    state[ch].emplace_back(stop);
+  }
+  for (auto const ch : chars) {
+    state[ch].clear();
+  }
+  return TempNFA(
+      {
+          {start, std::move(state)},
+          {stop, MakeState({})},
+      },
+      start, stop);
+}
 
 absl::StatusOr<TempNFA> Parser::ParseCharacterClass() {
   if (!absl::ConsumePrefix(&pattern_, "[")) {
@@ -78,6 +144,66 @@ absl::StatusOr<TempNFA> Parser::ParseCharacterClass() {
           {stop, {}},
       },
       start, stop);
+}
+
+absl::StatusOr<TempNFA> Parser::ParseEscape() {
+  if (!absl::ConsumePrefix(&pattern_, "\\")) {
+    return absl::InvalidArgumentError("expected \\");
+  }
+  if (pattern_.empty()) {
+    return absl::InvalidArgumentError("invalid escape code");
+  }
+  int const ch = pattern_[0];
+  pattern_.remove_prefix(1);
+  switch (ch) {
+    case '\\':
+      return MakeSingleCharacterNFA('\\');
+    case 'd':
+      return MakeCharacterClassNFA("0123456789");
+    case 'D':
+      return MakeNegatedCharacterClassNFA("0123456789");
+    case 'w':
+      return MakeCharacterClassNFA(
+          "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_");
+    case 'W':
+      return MakeNegatedCharacterClassNFA(
+          "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_");
+    case 's':
+      // TODO: add Unicode spaces.
+      return MakeCharacterClassNFA("\f\n\r\t\v");
+    case 'S':
+      // TODO: add Unicode spaces.
+      return MakeNegatedCharacterClassNFA("\f\n\r\t\v");
+    case 't':
+      return MakeSingleCharacterNFA('\t');
+    case 'r':
+      return MakeSingleCharacterNFA('\r');
+    case 'n':
+      return MakeSingleCharacterNFA('\n');
+    case 'v':
+      return MakeSingleCharacterNFA('\v');
+    case 'f':
+      return MakeSingleCharacterNFA('\f');
+      // TODO: handle word boundary (`\b`).
+    case 'x': {
+      if (pattern_.size() < 2) {
+        return absl::InvalidArgumentError("invalid escape code");
+      }
+      auto const status_or_digit1 = ParseHexDigit(pattern_[0]);
+      if (!status_or_digit1.ok()) {
+        return std::move(status_or_digit1).status();
+      }
+      auto const status_or_digit2 = ParseHexDigit(pattern_[1]);
+      if (!status_or_digit2.ok()) {
+        return std::move(status_or_digit2).status();
+      }
+      int const ch = status_or_digit1.value() * 16 + status_or_digit2.value();
+      return MakeSingleCharacterNFA(ch);
+    }
+      // TODO: handle Unicode escape codes.
+    default:
+      return absl::InvalidArgumentError("invalid escape code");
+  }
 }
 
 absl::StatusOr<TempNFA> Parser::Parse0() {
@@ -115,6 +241,8 @@ absl::StatusOr<TempNFA> Parser::Parse0() {
       return TempNFA({{start, MakeState({})}}, start, start);
     case '[':
       return ParseCharacterClass();
+    case '\\':
+      return ParseEscape();
     case '*':
     case '+':
       return absl::InvalidArgumentError("Kleene operator in invalid position");
