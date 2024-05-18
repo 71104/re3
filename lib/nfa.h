@@ -7,6 +7,7 @@
 #include <utility>
 #include <vector>
 
+#include "absl/container/flat_hash_set.h"
 #include "absl/container/inlined_vector.h"
 #include "lib/automaton.h"
 
@@ -34,7 +35,16 @@ class NFA final : public AutomatonInterface {
   bool Run(std::string_view input) const override;
 
  private:
-  bool RunInternal(int32_t state, std::string_view input) const;
+  class Runner {
+   public:
+    explicit Runner(NFA const &nfa) : nfa_(nfa) { visited_.reserve(nfa_.states_.size()); }
+
+    bool Run(int32_t state, std::string_view input);
+
+   private:
+    NFA const &nfa_;
+    absl::flat_hash_set<int32_t> visited_;
+  };
 
   States states_;
   int32_t initial_state_ = 0;
