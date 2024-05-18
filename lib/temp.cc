@@ -97,8 +97,8 @@ void TempNFA::Merge(TempNFA &&other, int32_t const initial_state, int32_t const 
 }
 
 std::unique_ptr<AutomatonInterface> TempNFA::Finalize() && {
+  CollapseEpsilonMoves();
   if (IsDeterministic()) {
-    CollapseEpsilonMoves();
     return std::make_unique<DFA>(std::move(*this).ToDFA());
   } else {
     return std::make_unique<NFA>(std::move(*this).ToNFA());
@@ -116,13 +116,28 @@ void TempNFA::MergeState(int32_t const state, State &&edges) {
   }
 }
 
+bool TempNFA::HasOnlyOneEpsilonMove(int32_t const state) const {
+  auto const &edges = states_.find(state)->second;
+  if (edges[0].size() != 1) {
+    return false;
+  }
+  for (int ch = 1; ch < 256; ++ch) {
+    if (!edges[ch].empty()) {
+      return false;
+    }
+  }
+  return true;
+}
+
 bool TempNFA::CollapseNextEpsilonMove() {
   for (auto &[state, edges] : states_) {
-    if (!edges[0].empty()) {
-      int32_t const source = edges[0][0];
-      edges[0].clear();
-      RenameState(source, state);
-      return true;
+    if (HasOnlyOneEpsilonMove(state)) {
+      int32_t const destination = edges[0][0];
+      if (state == destination || (state != final_state_ && destination != final_state_)) {
+        edges[0].clear();
+        RenameState(destination, state);
+        return true;
+      }
     }
   }
   return false;

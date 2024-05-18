@@ -89,6 +89,11 @@ class TempNFA {
   // Adds a state and its edges to the NFA, or merges it with an existing one.
   void MergeState(int32_t state, State &&edges);
 
+  // Checks whether the given state has exactly one outbound edge towards a single destination
+  // state, and that edge is epsilon-labeled. In that case `CollapseNextEpsilonMove` will collpase
+  // it into the destination state.
+  bool HasOnlyOneEpsilonMove(int32_t const state) const;
+
   // Auxiliary method for the implementation of `CollapseEpsilonMoves`.
   bool CollapseNextEpsilonMove();
 
