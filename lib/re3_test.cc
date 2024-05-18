@@ -97,6 +97,22 @@ TEST(ParserTest, KleeneStar) {
   EXPECT_FALSE(pattern->Run("aabaa"));
 }
 
+TEST(ParserTest, CharacterSequenceWithStar) {
+  auto const status_or_pattern = Parse("lo*rem");
+  EXPECT_OK(status_or_pattern);
+  auto const& pattern = status_or_pattern.value();
+  EXPECT_FALSE(pattern->Run(""));
+  EXPECT_FALSE(pattern->Run("l"));
+  EXPECT_TRUE(pattern->Run("lrem"));
+  EXPECT_TRUE(pattern->Run("lorem"));
+  EXPECT_TRUE(pattern->Run("loorem"));
+  EXPECT_TRUE(pattern->Run("looorem"));
+  EXPECT_FALSE(pattern->Run("larem"));
+  EXPECT_FALSE(pattern->Run("loremlorem"));
+  EXPECT_FALSE(pattern->Run("loremipsum"));
+  EXPECT_FALSE(pattern->Run("dolorloremipsum"));
+}
+
 TEST(ParserTest, KleenePlus) {
   auto const status_or_pattern = Parse("a+");
   EXPECT_OK(status_or_pattern);
@@ -111,6 +127,22 @@ TEST(ParserTest, KleenePlus) {
   EXPECT_FALSE(pattern->Run("aabaa"));
 }
 
+TEST(ParserTest, CharacterSequenceWithPlus) {
+  auto const status_or_pattern = Parse("lo+rem");
+  EXPECT_OK(status_or_pattern);
+  auto const& pattern = status_or_pattern.value();
+  EXPECT_FALSE(pattern->Run(""));
+  EXPECT_FALSE(pattern->Run("l"));
+  EXPECT_FALSE(pattern->Run("lrem"));
+  EXPECT_TRUE(pattern->Run("lorem"));
+  EXPECT_TRUE(pattern->Run("loorem"));
+  EXPECT_TRUE(pattern->Run("looorem"));
+  EXPECT_FALSE(pattern->Run("larem"));
+  EXPECT_FALSE(pattern->Run("loremlorem"));
+  EXPECT_FALSE(pattern->Run("loremipsum"));
+  EXPECT_FALSE(pattern->Run("dolorloremipsum"));
+}
+
 TEST(ParserTest, Maybe) {
   auto const status_or_pattern = Parse("a?");
   EXPECT_OK(status_or_pattern);
@@ -121,6 +153,22 @@ TEST(ParserTest, Maybe) {
   EXPECT_FALSE(pattern->Run("b"));
   EXPECT_FALSE(pattern->Run("ab"));
   EXPECT_FALSE(pattern->Run("ba"));
+}
+
+TEST(ParserTest, CharacterSequenceWithMaybe) {
+  auto const status_or_pattern = Parse("lo?rem");
+  EXPECT_OK(status_or_pattern);
+  auto const& pattern = status_or_pattern.value();
+  EXPECT_FALSE(pattern->Run(""));
+  EXPECT_FALSE(pattern->Run("l"));
+  EXPECT_TRUE(pattern->Run("lrem"));
+  EXPECT_TRUE(pattern->Run("lorem"));
+  EXPECT_FALSE(pattern->Run("loorem"));
+  EXPECT_FALSE(pattern->Run("looorem"));
+  EXPECT_FALSE(pattern->Run("larem"));
+  EXPECT_FALSE(pattern->Run("loremlorem"));
+  EXPECT_FALSE(pattern->Run("loremipsum"));
+  EXPECT_FALSE(pattern->Run("dolorloremipsum"));
 }
 
 TEST(ParserTest, EmptyOrEmpty) {
@@ -169,9 +217,25 @@ TEST(ParserTest, AOrB) {
   EXPECT_FALSE(pattern->Run("aaa"));
   EXPECT_TRUE(pattern->Run("b"));
   EXPECT_FALSE(pattern->Run("ab"));
+  EXPECT_FALSE(pattern->Run("a|b"));
   EXPECT_FALSE(pattern->Run("ba"));
   EXPECT_FALSE(pattern->Run("aba"));
   EXPECT_FALSE(pattern->Run("bab"));
+}
+
+TEST(ParserTest, LoremOrIpsum) {
+  auto const status_or_pattern = Parse("lorem|ipsum");
+  EXPECT_OK(status_or_pattern);
+  auto const& pattern = status_or_pattern.value();
+  EXPECT_FALSE(pattern->Run(""));
+  EXPECT_FALSE(pattern->Run("l"));
+  EXPECT_TRUE(pattern->Run("lorem"));
+  EXPECT_FALSE(pattern->Run("i"));
+  EXPECT_TRUE(pattern->Run("ipsum"));
+  EXPECT_FALSE(pattern->Run("loremipsum"));
+  EXPECT_FALSE(pattern->Run("lorem|ipsum"));
+  EXPECT_FALSE(pattern->Run("ipsumlorem"));
+  EXPECT_FALSE(pattern->Run("ipsum|lorem"));
 }
 
 TEST(ParserTest, EmptyBrackets) {
@@ -194,6 +258,19 @@ TEST(ParserTest, Brackets) {
   EXPECT_FALSE(pattern->Run("b"));
   EXPECT_FALSE(pattern->Run("anchor"));
   EXPECT_FALSE(pattern->Run("banana"));
+}
+
+TEST(ParserTest, IpsumInBrackets) {
+  auto const status_or_pattern = Parse("lorem(ipsum)dolor");
+  EXPECT_OK(status_or_pattern);
+  auto const& pattern = status_or_pattern.value();
+  EXPECT_FALSE(pattern->Run(""));
+  EXPECT_FALSE(pattern->Run("lorem"));
+  EXPECT_FALSE(pattern->Run("ipsum"));
+  EXPECT_FALSE(pattern->Run("dolor"));
+  EXPECT_FALSE(pattern->Run("loremdolor"));
+  EXPECT_FALSE(pattern->Run("loremidolor"));
+  EXPECT_TRUE(pattern->Run("loremipsumdolor"));
 }
 
 // TODO
