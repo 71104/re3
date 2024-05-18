@@ -82,7 +82,7 @@ class TempNFA {
   void Merge(TempNFA &&other, int32_t initial_state, int32_t final_state);
 
   // Finalizes this automaton by converting it into a `DFA` object if it's deterministic or an `NFA`
-  // if it's not. `next_state` is the number of the new (caller-generated) final state.
+  // if it's not.
   std::unique_ptr<AutomatonInterface> Finalize() &&;
 
  private:
