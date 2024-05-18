@@ -18,7 +18,7 @@ bool NFA::RunInternal(int32_t const state, std::string_view const input) const {
     }
   }
   if (input.empty()) {
-    return state == final_state_;
+    return false;
   }
   auto const substr = input.substr(1);
   for (auto const transition : edges[input[0]]) {

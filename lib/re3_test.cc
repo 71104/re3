@@ -111,6 +111,18 @@ TEST(ParserTest, KleenePlus) {
   EXPECT_FALSE(pattern->Run("aabaa"));
 }
 
+TEST(ParserTest, Maybe) {
+  auto const status_or_pattern = Parse("a?");
+  EXPECT_OK(status_or_pattern);
+  auto const& pattern = status_or_pattern.value();
+  EXPECT_TRUE(pattern->Run(""));
+  EXPECT_TRUE(pattern->Run("a"));
+  EXPECT_FALSE(pattern->Run("aa"));
+  EXPECT_FALSE(pattern->Run("b"));
+  EXPECT_FALSE(pattern->Run("ab"));
+  EXPECT_FALSE(pattern->Run("ba"));
+}
+
 TEST(ParserTest, EmptyOrEmpty) {
   auto const status_or_pattern = Parse("|");
   EXPECT_OK(status_or_pattern);
@@ -160,6 +172,28 @@ TEST(ParserTest, AOrB) {
   EXPECT_FALSE(pattern->Run("ba"));
   EXPECT_FALSE(pattern->Run("aba"));
   EXPECT_FALSE(pattern->Run("bab"));
+}
+
+TEST(ParserTest, EmptyBrackets) {
+  auto const status_or_pattern = Parse("()");
+  EXPECT_OK(status_or_pattern);
+  auto const& pattern = status_or_pattern.value();
+  EXPECT_TRUE(pattern->Run(""));
+  EXPECT_FALSE(pattern->Run("a"));
+  EXPECT_FALSE(pattern->Run("aa"));
+  EXPECT_FALSE(pattern->Run("b"));
+  EXPECT_FALSE(pattern->Run("ab"));
+}
+
+TEST(ParserTest, Brackets) {
+  auto const status_or_pattern = Parse("(a)");
+  EXPECT_OK(status_or_pattern);
+  auto const& pattern = status_or_pattern.value();
+  EXPECT_FALSE(pattern->Run(""));
+  EXPECT_TRUE(pattern->Run("a"));
+  EXPECT_FALSE(pattern->Run("b"));
+  EXPECT_FALSE(pattern->Run("anchor"));
+  EXPECT_FALSE(pattern->Run("banana"));
 }
 
 // TODO
