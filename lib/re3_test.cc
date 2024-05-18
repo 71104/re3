@@ -2,14 +2,23 @@
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 #include "lib/parser.h"
+#include "lib/temp.h"
 #include "lib/testing.h"
 
 namespace {
 
 using ::re3::Parse;
+using ::re3::TempNFA;
+using ::testing::Values;
 using ::testing::status::StatusIs;
 
-TEST(ParserTest, Empty) {
+class ParserTest : public ::testing::TestWithParam<bool> {
+ protected:
+  explicit ParserTest() { TempNFA::force_nfa_for_testing = GetParam(); }
+  ~ParserTest() { TempNFA::force_nfa_for_testing = false; }
+};
+
+TEST_P(ParserTest, Empty) {
   auto const status_or_pattern = Parse("");
   EXPECT_OK(status_or_pattern);
   auto const& pattern = status_or_pattern.value();
@@ -19,7 +28,7 @@ TEST(ParserTest, Empty) {
   EXPECT_TRUE(pattern->Run(""));
 }
 
-TEST(ParserTest, SimpleCharacter) {
+TEST_P(ParserTest, SimpleCharacter) {
   auto const status_or_pattern = Parse("a");
   EXPECT_OK(status_or_pattern);
   auto const& pattern = status_or_pattern.value();
@@ -30,7 +39,7 @@ TEST(ParserTest, SimpleCharacter) {
   EXPECT_FALSE(pattern->Run(""));
 }
 
-TEST(ParserTest, AnotherSimpleCharacter) {
+TEST_P(ParserTest, AnotherSimpleCharacter) {
   auto const status_or_pattern = Parse("b");
   EXPECT_OK(status_or_pattern);
   auto const& pattern = status_or_pattern.value();
@@ -41,7 +50,7 @@ TEST(ParserTest, AnotherSimpleCharacter) {
   EXPECT_FALSE(pattern->Run(""));
 }
 
-TEST(ParserTest, AnyCharacter) {
+TEST_P(ParserTest, AnyCharacter) {
   auto const status_or_pattern = Parse(".");
   EXPECT_OK(status_or_pattern);
   auto const& pattern = status_or_pattern.value();
@@ -52,13 +61,13 @@ TEST(ParserTest, AnyCharacter) {
   EXPECT_FALSE(pattern->Run(""));
 }
 
-TEST(ParserTest, InvalidSpecialCharacter) {
+TEST_P(ParserTest, InvalidSpecialCharacter) {
   EXPECT_THAT(Parse("*"), StatusIs(absl::StatusCode::kInvalidArgument));
   EXPECT_THAT(Parse("+"), StatusIs(absl::StatusCode::kInvalidArgument));
   EXPECT_THAT(Parse("?"), StatusIs(absl::StatusCode::kInvalidArgument));
 }
 
-TEST(ParserTest, CharacterSequence) {
+TEST_P(ParserTest, CharacterSequence) {
   auto const status_or_pattern = Parse("lorem");
   EXPECT_OK(status_or_pattern);
   auto const& pattern = status_or_pattern.value();
@@ -69,7 +78,7 @@ TEST(ParserTest, CharacterSequence) {
   EXPECT_FALSE(pattern->Run("dolorloremipsum"));
 }
 
-TEST(ParserTest, CharacterSequenceWithDot) {
+TEST_P(ParserTest, CharacterSequenceWithDot) {
   auto const status_or_pattern = Parse("lo.em");
   EXPECT_OK(status_or_pattern);
   auto const& pattern = status_or_pattern.value();
@@ -83,7 +92,7 @@ TEST(ParserTest, CharacterSequenceWithDot) {
   EXPECT_FALSE(pattern->Run("dolorloremipsum"));
 }
 
-TEST(ParserTest, KleeneStar) {
+TEST_P(ParserTest, KleeneStar) {
   auto const status_or_pattern = Parse("a*");
   EXPECT_OK(status_or_pattern);
   auto const& pattern = status_or_pattern.value();
@@ -97,7 +106,7 @@ TEST(ParserTest, KleeneStar) {
   EXPECT_FALSE(pattern->Run("aabaa"));
 }
 
-TEST(ParserTest, CharacterSequenceWithStar) {
+TEST_P(ParserTest, CharacterSequenceWithStar) {
   auto const status_or_pattern = Parse("lo*rem");
   EXPECT_OK(status_or_pattern);
   auto const& pattern = status_or_pattern.value();
@@ -113,7 +122,7 @@ TEST(ParserTest, CharacterSequenceWithStar) {
   EXPECT_FALSE(pattern->Run("dolorloremipsum"));
 }
 
-TEST(ParserTest, KleenePlus) {
+TEST_P(ParserTest, KleenePlus) {
   auto const status_or_pattern = Parse("a+");
   EXPECT_OK(status_or_pattern);
   auto const& pattern = status_or_pattern.value();
@@ -127,7 +136,7 @@ TEST(ParserTest, KleenePlus) {
   EXPECT_FALSE(pattern->Run("aabaa"));
 }
 
-TEST(ParserTest, CharacterSequenceWithPlus) {
+TEST_P(ParserTest, CharacterSequenceWithPlus) {
   auto const status_or_pattern = Parse("lo+rem");
   EXPECT_OK(status_or_pattern);
   auto const& pattern = status_or_pattern.value();
@@ -143,7 +152,7 @@ TEST(ParserTest, CharacterSequenceWithPlus) {
   EXPECT_FALSE(pattern->Run("dolorloremipsum"));
 }
 
-TEST(ParserTest, Maybe) {
+TEST_P(ParserTest, Maybe) {
   auto const status_or_pattern = Parse("a?");
   EXPECT_OK(status_or_pattern);
   auto const& pattern = status_or_pattern.value();
@@ -155,7 +164,7 @@ TEST(ParserTest, Maybe) {
   EXPECT_FALSE(pattern->Run("ba"));
 }
 
-TEST(ParserTest, CharacterSequenceWithMaybe) {
+TEST_P(ParserTest, CharacterSequenceWithMaybe) {
   auto const status_or_pattern = Parse("lo?rem");
   EXPECT_OK(status_or_pattern);
   auto const& pattern = status_or_pattern.value();
@@ -171,7 +180,7 @@ TEST(ParserTest, CharacterSequenceWithMaybe) {
   EXPECT_FALSE(pattern->Run("dolorloremipsum"));
 }
 
-TEST(ParserTest, EmptyOrEmpty) {
+TEST_P(ParserTest, EmptyOrEmpty) {
   auto const status_or_pattern = Parse("|");
   EXPECT_OK(status_or_pattern);
   auto const& pattern = status_or_pattern.value();
@@ -181,7 +190,7 @@ TEST(ParserTest, EmptyOrEmpty) {
   EXPECT_FALSE(pattern->Run("b"));
 }
 
-TEST(ParserTest, EmptyOrA) {
+TEST_P(ParserTest, EmptyOrA) {
   auto const status_or_pattern = Parse("|a");
   EXPECT_OK(status_or_pattern);
   auto const& pattern = status_or_pattern.value();
@@ -194,7 +203,7 @@ TEST(ParserTest, EmptyOrA) {
   EXPECT_FALSE(pattern->Run("ba"));
 }
 
-TEST(ParserTest, AOrEmpty) {
+TEST_P(ParserTest, AOrEmpty) {
   auto const status_or_pattern = Parse("a|");
   EXPECT_OK(status_or_pattern);
   auto const& pattern = status_or_pattern.value();
@@ -207,7 +216,7 @@ TEST(ParserTest, AOrEmpty) {
   EXPECT_FALSE(pattern->Run("ba"));
 }
 
-TEST(ParserTest, AOrB) {
+TEST_P(ParserTest, AOrB) {
   auto const status_or_pattern = Parse("a|b");
   EXPECT_OK(status_or_pattern);
   auto const& pattern = status_or_pattern.value();
@@ -223,7 +232,7 @@ TEST(ParserTest, AOrB) {
   EXPECT_FALSE(pattern->Run("bab"));
 }
 
-TEST(ParserTest, LoremOrIpsum) {
+TEST_P(ParserTest, LoremOrIpsum) {
   auto const status_or_pattern = Parse("lorem|ipsum");
   EXPECT_OK(status_or_pattern);
   auto const& pattern = status_or_pattern.value();
@@ -238,7 +247,7 @@ TEST(ParserTest, LoremOrIpsum) {
   EXPECT_FALSE(pattern->Run("ipsum|lorem"));
 }
 
-TEST(ParserTest, EmptyBrackets) {
+TEST_P(ParserTest, EmptyBrackets) {
   auto const status_or_pattern = Parse("()");
   EXPECT_OK(status_or_pattern);
   auto const& pattern = status_or_pattern.value();
@@ -249,7 +258,7 @@ TEST(ParserTest, EmptyBrackets) {
   EXPECT_FALSE(pattern->Run("ab"));
 }
 
-TEST(ParserTest, Brackets) {
+TEST_P(ParserTest, Brackets) {
   auto const status_or_pattern = Parse("(a)");
   EXPECT_OK(status_or_pattern);
   auto const& pattern = status_or_pattern.value();
@@ -260,7 +269,7 @@ TEST(ParserTest, Brackets) {
   EXPECT_FALSE(pattern->Run("banana"));
 }
 
-TEST(ParserTest, IpsumInBrackets) {
+TEST_P(ParserTest, IpsumInBrackets) {
   auto const status_or_pattern = Parse("lorem(ipsum)dolor");
   EXPECT_OK(status_or_pattern);
   auto const& pattern = status_or_pattern.value();
@@ -274,5 +283,23 @@ TEST(ParserTest, IpsumInBrackets) {
 }
 
 // TODO
+
+TEST_P(ParserTest, EpsilonLoop) {
+  auto const status_or_pattern = Parse("(|a)+");
+  EXPECT_OK(status_or_pattern);
+  auto const& pattern = status_or_pattern.value();
+  EXPECT_TRUE(pattern->Run(""));
+  EXPECT_TRUE(pattern->Run("a"));
+  EXPECT_TRUE(pattern->Run("aa"));
+  EXPECT_TRUE(pattern->Run("aaa"));
+  EXPECT_FALSE(pattern->Run("b"));
+  EXPECT_FALSE(pattern->Run("bb"));
+  EXPECT_FALSE(pattern->Run("ab"));
+  EXPECT_FALSE(pattern->Run("ba"));
+}
+
+// TODO
+
+INSTANTIATE_TEST_SUITE_P(ParserTest, ParserTest, Values(false, true));
 
 }  // namespace

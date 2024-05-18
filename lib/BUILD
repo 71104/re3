@@ -83,6 +83,7 @@ cc_test(
     srcs = ["re3_test.cc"],
     deps = [
         ":parser",
+        ":temp",
         ":testing",
         "@com_google_absl//absl/status",
         "@com_google_googletest//:gtest_main",

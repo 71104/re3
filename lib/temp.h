@@ -41,6 +41,10 @@ class TempNFA {
  public:
   using States = absl::btree_map<int32_t, State>;
 
+  // TESTS ONLY: force `Finalize()` to always generate an NFA even if it's deterministic. Defaults
+  // to false.
+  static bool force_nfa_for_testing;
+
   explicit TempNFA() = default;
 
   explicit TempNFA(States states, int32_t const initial_state, int32_t const final_state)

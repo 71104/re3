@@ -12,7 +12,12 @@
 
 namespace re3 {
 
+bool TempNFA::force_nfa_for_testing = false;
+
 bool TempNFA::IsDeterministic() const {
+  if (force_nfa_for_testing) {
+    return false;
+  }
   for (auto const &[state, edges] : states_) {
     if (edges[0].size() > 1) {
       return false;
@@ -133,7 +138,7 @@ bool TempNFA::CollapseNextEpsilonMove() {
   for (auto &[state, edges] : states_) {
     if (HasOnlyOneEpsilonMove(state)) {
       int32_t const destination = edges[0][0];
-      if (state == destination || (state != final_state_ && destination != final_state_)) {
+      if (state == destination || state != final_state_) {
         edges[0].clear();
         RenameState(destination, state);
         return true;
