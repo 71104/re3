@@ -88,8 +88,8 @@ void TempNFA::Merge(TempNFA &&other, int32_t const initial_state, int32_t const 
   for (auto &[state, edges] : other.states_) {
     MergeState(state, std::move(edges));
   }
-  AddEdge(0, initial_state, initial_state_);
-  AddEdge(0, initial_state, other.initial_state_);
+  states_.try_emplace(initial_state, MakeState({{0, {initial_state_, other.initial_state_}}}));
+  states_.try_emplace(final_state, MakeState({}));
   AddEdge(0, final_state_, final_state);
   AddEdge(0, other.final_state_, final_state);
   initial_state_ = initial_state;
@@ -117,9 +117,11 @@ void TempNFA::MergeState(int32_t const state, State &&edges) {
 }
 
 bool TempNFA::CollapseNextEpsilonMove() {
-  for (auto const &[state, edges] : states_) {
+  for (auto &[state, edges] : states_) {
     if (!edges[0].empty()) {
-      RenameState(edges[0][0], state);
+      int32_t const source = edges[0][0];
+      edges[0].clear();
+      RenameState(source, state);
       return true;
     }
   }

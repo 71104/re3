@@ -83,7 +83,7 @@ absl::StatusOr<TempNFA> Parser::ParseCharacterClass() {
 absl::StatusOr<TempNFA> Parser::Parse0() {
   int32_t const start = next_state_++;
   if (pattern_.empty()) {
-    return TempNFA({{start, {}}}, start, start);
+    return TempNFA({{start, MakeState({})}}, start, start);
   }
   if (absl::ConsumePrefix(&pattern_, "(")) {
     auto result = Parse3();
@@ -112,7 +112,7 @@ absl::StatusOr<TempNFA> Parser::Parse0() {
   switch (ch) {
     case ')':
     case '|':
-      return TempNFA({{start, {}}}, start, start);
+      return TempNFA({{start, MakeState({})}}, start, start);
     case '[':
       return ParseCharacterClass();
     case '*':
