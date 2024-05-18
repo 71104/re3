@@ -6,11 +6,20 @@
 
 #include "absl/container/btree_map.h"
 #include "absl/container/flat_hash_map.h"
+#include "absl/container/inlined_vector.h"
 #include "lib/automaton.h"
 #include "lib/dfa.h"
 #include "lib/nfa.h"
 
 namespace re3 {
+
+State MakeState(absl::flat_hash_map<uint8_t, absl::InlinedVector<int32_t, 1>> &&edges) {
+  State state;
+  for (auto &[ch, edge] : edges) {
+    state[ch] = std::move(edge);
+  }
+  return state;
+}
 
 bool TempNFA::force_nfa_for_testing = false;
 

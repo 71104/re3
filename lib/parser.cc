@@ -197,6 +197,7 @@ absl::StatusOr<TempNFA> Parser::ParseEscape() {
       if (!status_or_digit2.ok()) {
         return std::move(status_or_digit2).status();
       }
+      pattern_.remove_prefix(2);
       int const ch = status_or_digit1.value() * 16 + status_or_digit2.value();
       return MakeSingleCharacterNFA(ch);
     }

@@ -32,7 +32,7 @@ class VisitFlag final {
 }  // namespace
 
 bool NFA::RunInternal(int32_t const state, absl::flat_hash_set<int32_t>& visited,
-                      std::string_view const input) const {
+                      std::string_view input) const {
   if (input.empty() && state == final_state_) {
     return true;
   }
@@ -48,10 +48,11 @@ bool NFA::RunInternal(int32_t const state, absl::flat_hash_set<int32_t>& visited
   if (input.empty()) {
     return false;
   }
+  uint8_t const ch = input[0];
+  input.remove_prefix(1);
   absl::flat_hash_set<int32_t> new_visited;
-  auto const substr = input.substr(1);
-  for (auto const transition : edges[input[0]]) {
-    if (RunInternal(transition, new_visited, substr)) {
+  for (auto const transition : edges[ch]) {
+    if (RunInternal(transition, new_visited, input)) {
       return true;
     }
   }

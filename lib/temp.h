@@ -26,13 +26,7 @@ using State = NFA::State;
 //     {'f', {4, 56, 7}},
 //   })
 //
-State MakeState(absl::flat_hash_map<uint8_t, absl::InlinedVector<int32_t, 1>> &&edges) {
-  State state;
-  for (auto &[ch, edge] : edges) {
-    state[ch] = std::move(edge);
-  }
-  return state;
-}
+State MakeState(absl::flat_hash_map<uint8_t, absl::InlinedVector<int32_t, 1>> &&edges);
 
 // Represents an NFA under construction.
 //

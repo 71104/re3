@@ -9,7 +9,8 @@ bool DFA::Run(std::string_view input) const {
   while (!input.empty()) {
     auto const epsilon_transition = states_[state][0];
     if (epsilon_transition < 0) {
-      auto const transition = states_[state][input[0]];
+      uint8_t const ch = input[0];
+      auto const transition = states_[state][ch];
       if (transition < 0) {
         return false;
       }

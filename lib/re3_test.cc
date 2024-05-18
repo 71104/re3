@@ -50,6 +50,16 @@ TEST_P(ParserTest, AnotherSimpleCharacter) {
   EXPECT_FALSE(pattern->Run(""));
 }
 
+TEST_P(ParserTest, InvalidEscapeCode) {
+  EXPECT_THAT(Parse("\\a"), StatusIs(absl::StatusCode::kInvalidArgument));
+  EXPECT_THAT(Parse("\\T"), StatusIs(absl::StatusCode::kInvalidArgument));
+  EXPECT_THAT(Parse("\\R"), StatusIs(absl::StatusCode::kInvalidArgument));
+  EXPECT_THAT(Parse("\\N"), StatusIs(absl::StatusCode::kInvalidArgument));
+  EXPECT_THAT(Parse("\\V"), StatusIs(absl::StatusCode::kInvalidArgument));
+  EXPECT_THAT(Parse("\\F"), StatusIs(absl::StatusCode::kInvalidArgument));
+  EXPECT_THAT(Parse("\\X"), StatusIs(absl::StatusCode::kInvalidArgument));
+}
+
 TEST_P(ParserTest, Digit) {
   auto const status_or_pattern = Parse("\\d");
   EXPECT_OK(status_or_pattern);
@@ -337,6 +347,47 @@ TEST_P(ParserTest, FormFeed) {
   EXPECT_FALSE(pattern->Run("f"));
   EXPECT_FALSE(pattern->Run("\\"));
   EXPECT_FALSE(pattern->Run("\\f"));
+}
+
+TEST_P(ParserTest, InvalidHexCode) {
+  EXPECT_THAT(Parse("\\xZ0"), StatusIs(absl::StatusCode::kInvalidArgument));
+  EXPECT_THAT(Parse("\\x0Z"), StatusIs(absl::StatusCode::kInvalidArgument));
+}
+
+TEST_P(ParserTest, HexCode1) {
+  auto const status_or_pattern = Parse("\\x12");
+  EXPECT_OK(status_or_pattern);
+  auto const& pattern = status_or_pattern.value();
+  EXPECT_FALSE(pattern->Run(""));
+  EXPECT_TRUE(pattern->Run("\x12"));
+  EXPECT_FALSE(pattern->Run("a"));
+  EXPECT_FALSE(pattern->Run("x"));
+  EXPECT_FALSE(pattern->Run("\\"));
+  EXPECT_FALSE(pattern->Run("\\x12"));
+}
+
+TEST_P(ParserTest, HexCode2) {
+  auto const status_or_pattern = Parse("\\xAF");
+  EXPECT_OK(status_or_pattern);
+  auto const& pattern = status_or_pattern.value();
+  EXPECT_FALSE(pattern->Run(""));
+  EXPECT_TRUE(pattern->Run("\xAF"));
+  EXPECT_FALSE(pattern->Run("a"));
+  EXPECT_FALSE(pattern->Run("x"));
+  EXPECT_FALSE(pattern->Run("\\"));
+  EXPECT_FALSE(pattern->Run("\\xAF"));
+}
+
+TEST_P(ParserTest, HexCode3) {
+  auto const status_or_pattern = Parse("\\xaf");
+  EXPECT_OK(status_or_pattern);
+  auto const& pattern = status_or_pattern.value();
+  EXPECT_FALSE(pattern->Run(""));
+  EXPECT_TRUE(pattern->Run("\xAF"));
+  EXPECT_FALSE(pattern->Run("a"));
+  EXPECT_FALSE(pattern->Run("x"));
+  EXPECT_FALSE(pattern->Run("\\"));
+  EXPECT_FALSE(pattern->Run("\\xaf"));
 }
 
 TEST_P(ParserTest, AnyCharacter) {
