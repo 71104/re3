@@ -1,5 +1,6 @@
 #include "lib/nfa.h"
 
+#include <algorithm>
 #include <cstdint>
 #include <string_view>
 
