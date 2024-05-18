@@ -1,6 +1,5 @@
 #include "lib/nfa.h"
 
-#include <algorithm>
 #include <cstdint>
 #include <string_view>
 
@@ -9,44 +8,50 @@
 namespace re3 {
 
 bool NFA::Run(std::string_view const input) const {
-  return Runner(*this).Run(initial_state_, input);
+  absl::flat_hash_set<int32_t> visited;
+  return RunInternal(initial_state_, visited, input);
 }
 
 namespace {
 
-class VisitedSetSaver final {
+// Scoped object to push the current state to and pop it from the visited set.
+class VisitFlag final {
  public:
-  explicit VisitedSetSaver(absl::flat_hash_set<int32_t>& visited) : visited_(visited) {
-    std::swap(visited_, saved_);
+  explicit VisitFlag(absl::flat_hash_set<int32_t>& visited, int32_t const state)
+      : visited_(visited), state_(state) {
+    visited_.emplace(state_);
   }
 
-  ~VisitedSetSaver() { std::swap(visited_, saved_); }
+  ~VisitFlag() { visited_.erase(state_); }
 
  private:
   absl::flat_hash_set<int32_t>& visited_;
-  absl::flat_hash_set<int32_t> saved_;
+  int32_t state_;
 };
 
 }  // namespace
 
-bool NFA::Runner::Run(int32_t const state, std::string_view const input) {
-  visited_.emplace(state);
-  if (input.empty() && state == nfa_.final_state_) {
+bool NFA::RunInternal(int32_t const state, absl::flat_hash_set<int32_t>& visited,
+                      std::string_view const input) const {
+  if (input.empty() && state == final_state_) {
     return true;
   }
-  auto const& edges = nfa_.states_[state];
-  for (auto const transition : edges[0]) {
-    if (!visited_.contains(transition) && Run(transition, input)) {
-      return true;
+  auto const& edges = states_[state];
+  {
+    VisitFlag vf{visited, state};
+    for (auto const transition : edges[0]) {
+      if (!visited.contains(transition) && RunInternal(transition, visited, input)) {
+        return true;
+      }
     }
   }
   if (input.empty()) {
     return false;
   }
-  VisitedSetSaver vss{visited_};
+  absl::flat_hash_set<int32_t> new_visited;
   auto const substr = input.substr(1);
   for (auto const transition : edges[input[0]]) {
-    if (Run(transition, substr)) {
+    if (RunInternal(transition, new_visited, substr)) {
       return true;
     }
   }

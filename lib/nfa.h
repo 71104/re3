@@ -35,16 +35,10 @@ class NFA final : public AutomatonInterface {
   bool Run(std::string_view input) const override;
 
  private:
-  class Runner {
-   public:
-    explicit Runner(NFA const &nfa) : nfa_(nfa) { visited_.reserve(nfa_.states_.size()); }
-
-    bool Run(int32_t state, std::string_view input);
-
-   private:
-    NFA const &nfa_;
-    absl::flat_hash_set<int32_t> visited_;
-  };
+  // Internal recursive implementation of the running algorithm. The `visited` set is necessary to
+  // prevent overflowing the call stack in case there's a loop of epsilon-moves.
+  bool RunInternal(int32_t state, absl::flat_hash_set<int32_t> &visited,
+                   std::string_view input) const;
 
   States states_;
   int32_t initial_state_ = 0;
