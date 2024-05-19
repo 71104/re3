@@ -39,7 +39,7 @@ class Parser {
   TempNFA MakeCharacterClassNFA(std::string_view chars);
   TempNFA MakeNegatedCharacterClassNFA(std::string_view chars);
 
-  static absl::Status UpdateCharacterClassEdge(bool negated, State* start_state, int ch,
+  static absl::Status UpdateCharacterClassEdge(bool negated, State* start_state, uint8_t ch,
                                                int32_t stop_state_num);
 
   // Called by `ParseCharacterClass` to parse escape codes. `negated` indicates whether the
@@ -146,7 +146,7 @@ TempNFA Parser::MakeNegatedCharacterClassNFA(std::string_view const chars) {
 }
 
 absl::Status Parser::UpdateCharacterClassEdge(bool const negated, State* const start_state,
-                                              int const ch, int32_t const stop_state_num) {
+                                              uint8_t const ch, int32_t const stop_state_num) {
   if (negated) {
     (*start_state)[ch].clear();
   } else {
@@ -160,7 +160,7 @@ absl::Status Parser::ParseCharacterClassEscapeCode(bool const negated, State* co
   if (pattern_.empty()) {
     return absl::InvalidArgumentError("invalid escape code");
   }
-  int const ch = pattern_[0];
+  uint8_t const ch = pattern_[0];
   pattern_.remove_prefix(1);
   switch (ch) {
     case '\\':
