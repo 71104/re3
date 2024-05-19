@@ -774,6 +774,13 @@ TEST_P(ParserTest, EmptyBrackets) {
   EXPECT_FALSE(pattern->Run("ab"));
 }
 
+TEST_P(ParserTest, UnmatchedBrackets) {
+  EXPECT_THAT(Parse("("), StatusIs(absl::StatusCode::kInvalidArgument));
+  EXPECT_THAT(Parse(")"), StatusIs(absl::StatusCode::kInvalidArgument));
+  EXPECT_THAT(Parse("(()"), StatusIs(absl::StatusCode::kInvalidArgument));
+  EXPECT_THAT(Parse("())"), StatusIs(absl::StatusCode::kInvalidArgument));
+}
+
 TEST_P(ParserTest, Brackets) {
   auto const status_or_pattern = Parse("(a)");
   EXPECT_OK(status_or_pattern);
