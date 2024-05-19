@@ -427,7 +427,7 @@ TEST_P(ParserTest, NegatedEmptyCharacterClass) {
 }
 
 TEST_P(ParserTest, CharacterClass) {
-  auto const status_or_pattern = Parse("[lorem]");
+  auto const status_or_pattern = Parse("[lorem\xAF]");
   EXPECT_OK(status_or_pattern);
   auto const& pattern = status_or_pattern.value();
   EXPECT_FALSE(pattern->Run(""));
@@ -437,12 +437,14 @@ TEST_P(ParserTest, CharacterClass) {
   EXPECT_TRUE(pattern->Run("r"));
   EXPECT_TRUE(pattern->Run("e"));
   EXPECT_TRUE(pattern->Run("m"));
+  EXPECT_TRUE(pattern->Run("\xAF"));
+  EXPECT_FALSE(pattern->Run("\xBF"));
   EXPECT_FALSE(pattern->Run("lorem"));
   EXPECT_FALSE(pattern->Run("[lorem]"));
 }
 
 TEST_P(ParserTest, NegatedCharacterClass) {
-  auto const status_or_pattern = Parse("[^lorem]");
+  auto const status_or_pattern = Parse("[^lorem\xAF]");
   EXPECT_OK(status_or_pattern);
   auto const& pattern = status_or_pattern.value();
   EXPECT_FALSE(pattern->Run(""));
@@ -453,6 +455,8 @@ TEST_P(ParserTest, NegatedCharacterClass) {
   EXPECT_FALSE(pattern->Run("r"));
   EXPECT_FALSE(pattern->Run("e"));
   EXPECT_FALSE(pattern->Run("m"));
+  EXPECT_FALSE(pattern->Run("\xAF"));
+  EXPECT_TRUE(pattern->Run("\xBF"));
   EXPECT_TRUE(pattern->Run("^"));
   EXPECT_FALSE(pattern->Run("lorem"));
   EXPECT_FALSE(pattern->Run("^lorem"));

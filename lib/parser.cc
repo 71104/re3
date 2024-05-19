@@ -116,7 +116,7 @@ TempNFA Parser::MakeCharacterClassNFA(std::string_view const chars) {
   int32_t const start = next_state_++;
   int32_t const stop = next_state_++;
   State state;
-  for (auto const ch : chars) {
+  for (uint8_t const ch : chars) {
     state[ch].emplace_back(stop);
   }
   return TempNFA(
@@ -134,7 +134,7 @@ TempNFA Parser::MakeNegatedCharacterClassNFA(std::string_view const chars) {
   for (int ch = 1; ch < 256; ++ch) {
     state[ch].emplace_back(stop);
   }
-  for (auto const ch : chars) {
+  for (uint8_t const ch : chars) {
     state[ch].clear();
   }
   return TempNFA(
