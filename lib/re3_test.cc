@@ -565,6 +565,12 @@ TEST_P(ParserTest, NegatedCharacterClassWithMoreEscapes) {
   EXPECT_TRUE(pattern->Run("y"));
 }
 
+TEST_P(ParserTest, InvalidEscapeCodesInCharacterClass) {
+  EXPECT_THAT(Parse("[\\a]"), StatusIs(absl::StatusCode::kInvalidArgument));
+  EXPECT_THAT(Parse("[\\x0Z]"), StatusIs(absl::StatusCode::kInvalidArgument));
+  EXPECT_THAT(Parse("[\\xZ0]"), StatusIs(absl::StatusCode::kInvalidArgument));
+}
+
 TEST_P(ParserTest, InvalidSpecialCharacter) {
   EXPECT_THAT(Parse("*"), StatusIs(absl::StatusCode::kInvalidArgument));
   EXPECT_THAT(Parse("+"), StatusIs(absl::StatusCode::kInvalidArgument));
