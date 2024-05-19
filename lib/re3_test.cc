@@ -401,6 +401,170 @@ TEST_P(ParserTest, AnyCharacter) {
   EXPECT_FALSE(pattern->Run(""));
 }
 
+TEST_P(ParserTest, EmptyCharacterClass) {
+  auto const status_or_pattern = Parse("[]");
+  EXPECT_OK(status_or_pattern);
+  auto const& pattern = status_or_pattern.value();
+  EXPECT_FALSE(pattern->Run(""));
+  EXPECT_FALSE(pattern->Run("a"));
+  EXPECT_FALSE(pattern->Run("b"));
+  EXPECT_FALSE(pattern->Run("lorem"));
+  EXPECT_FALSE(pattern->Run("ipsum"));
+  EXPECT_FALSE(pattern->Run("[]"));
+}
+
+TEST_P(ParserTest, NegatedEmptyCharacterClass) {
+  auto const status_or_pattern = Parse("[^]");
+  EXPECT_OK(status_or_pattern);
+  auto const& pattern = status_or_pattern.value();
+  EXPECT_FALSE(pattern->Run(""));
+  EXPECT_TRUE(pattern->Run("a"));
+  EXPECT_TRUE(pattern->Run("b"));
+  EXPECT_TRUE(pattern->Run("^"));
+  EXPECT_FALSE(pattern->Run("lorem"));
+  EXPECT_FALSE(pattern->Run("ipsum"));
+  EXPECT_FALSE(pattern->Run("[^]"));
+}
+
+TEST_P(ParserTest, CharacterClass) {
+  auto const status_or_pattern = Parse("[lorem]");
+  EXPECT_OK(status_or_pattern);
+  auto const& pattern = status_or_pattern.value();
+  EXPECT_FALSE(pattern->Run(""));
+  EXPECT_FALSE(pattern->Run("a"));
+  EXPECT_TRUE(pattern->Run("l"));
+  EXPECT_TRUE(pattern->Run("o"));
+  EXPECT_TRUE(pattern->Run("r"));
+  EXPECT_TRUE(pattern->Run("e"));
+  EXPECT_TRUE(pattern->Run("m"));
+  EXPECT_FALSE(pattern->Run("lorem"));
+  EXPECT_FALSE(pattern->Run("[lorem]"));
+}
+
+TEST_P(ParserTest, NegatedCharacterClass) {
+  auto const status_or_pattern = Parse("[^lorem]");
+  EXPECT_OK(status_or_pattern);
+  auto const& pattern = status_or_pattern.value();
+  EXPECT_FALSE(pattern->Run(""));
+  EXPECT_TRUE(pattern->Run("a"));
+  EXPECT_TRUE(pattern->Run("b"));
+  EXPECT_FALSE(pattern->Run("l"));
+  EXPECT_FALSE(pattern->Run("o"));
+  EXPECT_FALSE(pattern->Run("r"));
+  EXPECT_FALSE(pattern->Run("e"));
+  EXPECT_FALSE(pattern->Run("m"));
+  EXPECT_TRUE(pattern->Run("^"));
+  EXPECT_FALSE(pattern->Run("lorem"));
+  EXPECT_FALSE(pattern->Run("^lorem"));
+  EXPECT_FALSE(pattern->Run("[^lorem]"));
+}
+
+TEST_P(ParserTest, CharacterClassWithCircumflex) {
+  auto const status_or_pattern = Parse("[ab^cd]");
+  EXPECT_OK(status_or_pattern);
+  auto const& pattern = status_or_pattern.value();
+  EXPECT_FALSE(pattern->Run(""));
+  EXPECT_TRUE(pattern->Run("a"));
+  EXPECT_TRUE(pattern->Run("b"));
+  EXPECT_TRUE(pattern->Run("^"));
+  EXPECT_TRUE(pattern->Run("c"));
+  EXPECT_TRUE(pattern->Run("d"));
+  EXPECT_FALSE(pattern->Run("ab^cd"));
+}
+
+TEST_P(ParserTest, NegatedCharacterClassWithCircumflex) {
+  auto const status_or_pattern = Parse("[^ab^cd]");
+  EXPECT_OK(status_or_pattern);
+  auto const& pattern = status_or_pattern.value();
+  EXPECT_FALSE(pattern->Run(""));
+  EXPECT_FALSE(pattern->Run("a"));
+  EXPECT_FALSE(pattern->Run("b"));
+  EXPECT_FALSE(pattern->Run("^"));
+  EXPECT_FALSE(pattern->Run("c"));
+  EXPECT_FALSE(pattern->Run("d"));
+  EXPECT_TRUE(pattern->Run("x"));
+  EXPECT_TRUE(pattern->Run("y"));
+  EXPECT_FALSE(pattern->Run("ab^cd"));
+}
+
+TEST_P(ParserTest, CharacterClassWithEscapes) {
+  auto const status_or_pattern = Parse("[a\\\\\\^\\.\\(\\)\\[\\]\\{\\}b]");
+  EXPECT_OK(status_or_pattern);
+  auto const& pattern = status_or_pattern.value();
+  EXPECT_FALSE(pattern->Run(""));
+  EXPECT_TRUE(pattern->Run("a"));
+  EXPECT_TRUE(pattern->Run("b"));
+  EXPECT_TRUE(pattern->Run("\\"));
+  EXPECT_TRUE(pattern->Run("^"));
+  EXPECT_TRUE(pattern->Run("."));
+  EXPECT_TRUE(pattern->Run("("));
+  EXPECT_TRUE(pattern->Run(")"));
+  EXPECT_TRUE(pattern->Run("["));
+  EXPECT_TRUE(pattern->Run("]"));
+  EXPECT_TRUE(pattern->Run("{"));
+  EXPECT_TRUE(pattern->Run("}"));
+  EXPECT_FALSE(pattern->Run("x"));
+  EXPECT_FALSE(pattern->Run("y"));
+}
+
+TEST_P(ParserTest, NegatedCharacterClassWithEscapes) {
+  auto const status_or_pattern = Parse("[^a\\\\\\^\\.\\(\\)\\[\\]\\{\\}b]");
+  EXPECT_OK(status_or_pattern);
+  auto const& pattern = status_or_pattern.value();
+  EXPECT_FALSE(pattern->Run(""));
+  EXPECT_FALSE(pattern->Run("a"));
+  EXPECT_FALSE(pattern->Run("b"));
+  EXPECT_FALSE(pattern->Run("\\"));
+  EXPECT_FALSE(pattern->Run("^"));
+  EXPECT_FALSE(pattern->Run("."));
+  EXPECT_FALSE(pattern->Run("("));
+  EXPECT_FALSE(pattern->Run(")"));
+  EXPECT_FALSE(pattern->Run("["));
+  EXPECT_FALSE(pattern->Run("]"));
+  EXPECT_FALSE(pattern->Run("{"));
+  EXPECT_FALSE(pattern->Run("}"));
+  EXPECT_TRUE(pattern->Run("x"));
+  EXPECT_TRUE(pattern->Run("y"));
+}
+
+TEST_P(ParserTest, CharacterClassWithMoreEscapes) {
+  auto const status_or_pattern = Parse("[\\t\\r\\n\\v\\f\\b\\x12\\xAF]");
+  EXPECT_OK(status_or_pattern);
+  auto const& pattern = status_or_pattern.value();
+  EXPECT_FALSE(pattern->Run(""));
+  EXPECT_FALSE(pattern->Run("a"));
+  EXPECT_FALSE(pattern->Run("b"));
+  EXPECT_TRUE(pattern->Run("\t"));
+  EXPECT_TRUE(pattern->Run("\r"));
+  EXPECT_TRUE(pattern->Run("\n"));
+  EXPECT_TRUE(pattern->Run("\v"));
+  EXPECT_TRUE(pattern->Run("\f"));
+  EXPECT_TRUE(pattern->Run("\b"));
+  EXPECT_TRUE(pattern->Run("\x12"));
+  EXPECT_TRUE(pattern->Run("\xAF"));
+  EXPECT_FALSE(pattern->Run("x"));
+  EXPECT_FALSE(pattern->Run("y"));
+}
+
+TEST_P(ParserTest, NegatedCharacterClassWithMoreEscapes) {
+  auto const status_or_pattern = Parse("[^\\t\\r\\n\\v\\f\\b\\x12\\xAF]");
+  EXPECT_OK(status_or_pattern);
+  auto const& pattern = status_or_pattern.value();
+  EXPECT_FALSE(pattern->Run(""));
+  EXPECT_TRUE(pattern->Run("a"));
+  EXPECT_TRUE(pattern->Run("b"));
+  EXPECT_FALSE(pattern->Run("\t"));
+  EXPECT_FALSE(pattern->Run("\r"));
+  EXPECT_FALSE(pattern->Run("\n"));
+  EXPECT_FALSE(pattern->Run("\v"));
+  EXPECT_FALSE(pattern->Run("\f"));
+  EXPECT_FALSE(pattern->Run("\b"));
+  EXPECT_FALSE(pattern->Run("\x12"));
+  EXPECT_FALSE(pattern->Run("\xAF"));
+  EXPECT_TRUE(pattern->Run("x"));
+  EXPECT_TRUE(pattern->Run("y"));
+}
+
 TEST_P(ParserTest, InvalidSpecialCharacter) {
   EXPECT_THAT(Parse("*"), StatusIs(absl::StatusCode::kInvalidArgument));
   EXPECT_THAT(Parse("+"), StatusIs(absl::StatusCode::kInvalidArgument));

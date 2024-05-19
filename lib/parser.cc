@@ -29,12 +29,27 @@ class Parser {
   absl::StatusOr<std::unique_ptr<AutomatonInterface>> Parse();
 
  private:
-  // Parses a hex digit. Used to parse hex escape codes.
+  // Parses a hex digit. Used by `ParseHexCode` to parse hex escape codes.
   static absl::StatusOr<int> ParseHexDigit(int ch);
+
+  // Parses the next two characters as a hex byte. Used to parse hex escape codes.
+  absl::StatusOr<int> ParseHexCode();
 
   TempNFA MakeSingleCharacterNFA(int ch);
   TempNFA MakeCharacterClassNFA(std::string_view chars);
   TempNFA MakeNegatedCharacterClassNFA(std::string_view chars);
+
+  static absl::Status UpdateCharacterClassEdge(bool negated, State* start_state, int ch,
+                                               int32_t stop_state_num);
+
+  // Called by `ParseCharacterClass` to parse escape codes. `negated` indicates whether the
+  // character class is negated (i.e. it begins with ^). `state` is the NFA state to update with the
+  // characters resulting from the escape code. Returns an error status if the escape code is
+  // invalid.
+  //
+  // REQUIRES: the backslash before the escape code must have already been consumed.
+  absl::Status ParseCharacterClassEscapeCode(bool negated, State* start_state,
+                                             int32_t stop_state_num);
 
   // Called by `Parse0` to parse character classes (i.e. square brackets).
   absl::StatusOr<TempNFA> ParseCharacterClass();
@@ -68,6 +83,22 @@ absl::StatusOr<int> Parser::ParseHexDigit(int const ch) {
   } else {
     return absl::InvalidArgumentError("invalid hex digit");
   }
+}
+
+absl::StatusOr<int> Parser::ParseHexCode() {
+  if (pattern_.size() < 2) {
+    return absl::InvalidArgumentError("invalid escape code");
+  }
+  auto const status_or_digit1 = ParseHexDigit(pattern_[0]);
+  if (!status_or_digit1.ok()) {
+    return std::move(status_or_digit1).status();
+  }
+  auto const status_or_digit2 = ParseHexDigit(pattern_[1]);
+  if (!status_or_digit2.ok()) {
+    return std::move(status_or_digit2).status();
+  }
+  pattern_.remove_prefix(2);
+  return status_or_digit1.value() * 16 + status_or_digit2.value();
 }
 
 TempNFA Parser::MakeSingleCharacterNFA(int const ch) {
@@ -114,6 +145,58 @@ TempNFA Parser::MakeNegatedCharacterClassNFA(std::string_view const chars) {
       start, stop);
 }
 
+absl::Status Parser::UpdateCharacterClassEdge(bool const negated, State* const start_state,
+                                              int const ch, int32_t const stop_state_num) {
+  if (negated) {
+    (*start_state)[ch].clear();
+  } else {
+    (*start_state)[ch].emplace_back(stop_state_num);
+  }
+  return absl::OkStatus();
+}
+
+absl::Status Parser::ParseCharacterClassEscapeCode(bool const negated, State* const start_state,
+                                                   int32_t const stop_state_num) {
+  if (pattern_.empty()) {
+    return absl::InvalidArgumentError("invalid escape code");
+  }
+  int const ch = pattern_[0];
+  pattern_.remove_prefix(1);
+  switch (ch) {
+    case '\\':
+    case '^':
+    case '.':
+    case '(':
+    case ')':
+    case '[':
+    case ']':
+    case '{':
+    case '}':
+      return UpdateCharacterClassEdge(negated, start_state, ch, stop_state_num);
+    case 't':
+      return UpdateCharacterClassEdge(negated, start_state, '\t', stop_state_num);
+    case 'r':
+      return UpdateCharacterClassEdge(negated, start_state, '\r', stop_state_num);
+    case 'n':
+      return UpdateCharacterClassEdge(negated, start_state, '\n', stop_state_num);
+    case 'v':
+      return UpdateCharacterClassEdge(negated, start_state, '\v', stop_state_num);
+    case 'f':
+      return UpdateCharacterClassEdge(negated, start_state, '\f', stop_state_num);
+    case 'b':
+      return UpdateCharacterClassEdge(negated, start_state, '\b', stop_state_num);
+    case 'x': {
+      auto status_or_code = ParseHexCode();
+      if (!status_or_code.ok()) {
+        return std::move(status_or_code).status();
+      }
+      return UpdateCharacterClassEdge(negated, start_state, status_or_code.value(), stop_state_num);
+    }
+    default:
+      return absl::InvalidArgumentError("invalid escape code");
+  }
+}
+
 absl::StatusOr<TempNFA> Parser::ParseCharacterClass() {
   if (!absl::ConsumePrefix(&pattern_, "[")) {
     return absl::InvalidArgumentError("expected [");
@@ -131,11 +214,20 @@ absl::StatusOr<TempNFA> Parser::ParseCharacterClass() {
     if (pattern_.empty()) {
       return absl::InvalidArgumentError("unmatched square bracket");
     }
-    // TODO: character ranges
-    if (negated) {
-      state[pattern_[0]].clear();
+    if (absl::ConsumePrefix(&pattern_, "\\")) {
+      auto const status = ParseCharacterClassEscapeCode(negated, &state, stop);
+      if (!status.ok()) {
+        return status;
+      }
     } else {
-      state[pattern_[0]].emplace_back(stop);
+      // TODO: character ranges
+      uint8_t const ch = pattern_[0];
+      pattern_.remove_prefix(1);
+      if (negated) {
+        state[ch].clear();
+      } else {
+        state[ch].emplace_back(stop);
+      }
     }
   }
   return TempNFA(
@@ -186,20 +278,11 @@ absl::StatusOr<TempNFA> Parser::ParseEscape() {
       return MakeSingleCharacterNFA('\f');
       // TODO: handle word boundary (`\b`).
     case 'x': {
-      if (pattern_.size() < 2) {
-        return absl::InvalidArgumentError("invalid escape code");
+      auto status_or_code = ParseHexCode();
+      if (!status_or_code.ok()) {
+        return std::move(status_or_code).status();
       }
-      auto const status_or_digit1 = ParseHexDigit(pattern_[0]);
-      if (!status_or_digit1.ok()) {
-        return std::move(status_or_digit1).status();
-      }
-      auto const status_or_digit2 = ParseHexDigit(pattern_[1]);
-      if (!status_or_digit2.ok()) {
-        return std::move(status_or_digit2).status();
-      }
-      pattern_.remove_prefix(2);
-      int const ch = status_or_digit1.value() * 16 + status_or_digit2.value();
-      return MakeSingleCharacterNFA(ch);
+      return MakeSingleCharacterNFA(status_or_code.value());
     }
       // TODO: handle Unicode escape codes.
     default:
