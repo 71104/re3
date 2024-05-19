@@ -492,7 +492,7 @@ TEST_P(ParserTest, NegatedCharacterClassWithCircumflex) {
 }
 
 TEST_P(ParserTest, CharacterClassWithEscapes) {
-  auto const status_or_pattern = Parse("[a\\\\\\^\\.\\(\\)\\[\\]\\{\\}b]");
+  auto const status_or_pattern = Parse("[a\\\\\\^\\$\\.\\(\\)\\[\\]\\{\\}\\|b]");
   EXPECT_OK(status_or_pattern);
   auto const& pattern = status_or_pattern.value();
   EXPECT_FALSE(pattern->Run(""));
@@ -500,6 +500,7 @@ TEST_P(ParserTest, CharacterClassWithEscapes) {
   EXPECT_TRUE(pattern->Run("b"));
   EXPECT_TRUE(pattern->Run("\\"));
   EXPECT_TRUE(pattern->Run("^"));
+  EXPECT_TRUE(pattern->Run("$"));
   EXPECT_TRUE(pattern->Run("."));
   EXPECT_TRUE(pattern->Run("("));
   EXPECT_TRUE(pattern->Run(")"));
@@ -507,12 +508,13 @@ TEST_P(ParserTest, CharacterClassWithEscapes) {
   EXPECT_TRUE(pattern->Run("]"));
   EXPECT_TRUE(pattern->Run("{"));
   EXPECT_TRUE(pattern->Run("}"));
+  EXPECT_TRUE(pattern->Run("|"));
   EXPECT_FALSE(pattern->Run("x"));
   EXPECT_FALSE(pattern->Run("y"));
 }
 
 TEST_P(ParserTest, NegatedCharacterClassWithEscapes) {
-  auto const status_or_pattern = Parse("[^a\\\\\\^\\.\\(\\)\\[\\]\\{\\}b]");
+  auto const status_or_pattern = Parse("[^a\\\\\\^\\$\\.\\(\\)\\[\\]\\{\\}\\|b]");
   EXPECT_OK(status_or_pattern);
   auto const& pattern = status_or_pattern.value();
   EXPECT_FALSE(pattern->Run(""));
@@ -520,6 +522,7 @@ TEST_P(ParserTest, NegatedCharacterClassWithEscapes) {
   EXPECT_FALSE(pattern->Run("b"));
   EXPECT_FALSE(pattern->Run("\\"));
   EXPECT_FALSE(pattern->Run("^"));
+  EXPECT_FALSE(pattern->Run("$"));
   EXPECT_FALSE(pattern->Run("."));
   EXPECT_FALSE(pattern->Run("("));
   EXPECT_FALSE(pattern->Run(")"));
@@ -527,6 +530,7 @@ TEST_P(ParserTest, NegatedCharacterClassWithEscapes) {
   EXPECT_FALSE(pattern->Run("]"));
   EXPECT_FALSE(pattern->Run("{"));
   EXPECT_FALSE(pattern->Run("}"));
+  EXPECT_FALSE(pattern->Run("|"));
   EXPECT_TRUE(pattern->Run("x"));
   EXPECT_TRUE(pattern->Run("y"));
 }

@@ -165,6 +165,7 @@ absl::Status Parser::ParseCharacterClassEscapeCode(bool const negated, State* co
   switch (ch) {
     case '\\':
     case '^':
+    case '$':
     case '.':
     case '(':
     case ')':
@@ -172,6 +173,7 @@ absl::Status Parser::ParseCharacterClassEscapeCode(bool const negated, State* co
     case ']':
     case '{':
     case '}':
+    case '|':
       return UpdateCharacterClassEdge(negated, start_state, ch, stop_state_num);
     case 't':
       return UpdateCharacterClassEdge(negated, start_state, '\t', stop_state_num);
@@ -249,7 +251,17 @@ absl::StatusOr<TempNFA> Parser::ParseEscape() {
   pattern_.remove_prefix(1);
   switch (ch) {
     case '\\':
-      return MakeSingleCharacterNFA('\\');
+    case '^':
+    case '$':
+    case '.':
+    case '(':
+    case ')':
+    case '[':
+    case ']':
+    case '{':
+    case '}':
+    case '|':
+      return MakeSingleCharacterNFA(ch);
     case 'd':
       return MakeCharacterClassNFA("0123456789");
     case 'D':
