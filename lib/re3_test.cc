@@ -777,6 +777,7 @@ TEST_P(ParserTest, EmptyBrackets) {
 TEST_P(ParserTest, UnmatchedBrackets) {
   EXPECT_THAT(Parse("("), StatusIs(absl::StatusCode::kInvalidArgument));
   EXPECT_THAT(Parse(")"), StatusIs(absl::StatusCode::kInvalidArgument));
+  EXPECT_THAT(Parse(")("), StatusIs(absl::StatusCode::kInvalidArgument));
   EXPECT_THAT(Parse("(()"), StatusIs(absl::StatusCode::kInvalidArgument));
   EXPECT_THAT(Parse("())"), StatusIs(absl::StatusCode::kInvalidArgument));
 }
