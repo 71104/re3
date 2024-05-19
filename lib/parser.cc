@@ -325,6 +325,8 @@ absl::StatusOr<TempNFA> Parser::Parse0() {
       return TempNFA({{start, MakeState({})}}, start, start);
     case '[':
       return ParseCharacterClass();
+    case ']':
+      return absl::InvalidArgumentError("unmatched square bracket");
     case '\\':
       return ParseEscape();
     case '*':
@@ -409,11 +411,13 @@ absl::StatusOr<TempNFA> Parser::Parse3() {
 
 absl::StatusOr<std::unique_ptr<AutomatonInterface>> Parser::Parse() {
   auto status_or_nfa = Parse3();
-  if (status_or_nfa.ok()) {
-    return std::move(status_or_nfa).value().Finalize();
-  } else {
+  if (!status_or_nfa.ok()) {
     return std::move(status_or_nfa).status();
   }
+  if (!pattern_.empty()) {
+    return absl::InvalidArgumentError("expected end of string");
+  }
+  return std::move(status_or_nfa).value().Finalize();
 }
 
 }  // namespace

@@ -579,6 +579,8 @@ TEST_P(ParserTest, InvalidSpecialCharacter) {
   EXPECT_THAT(Parse("*"), StatusIs(absl::StatusCode::kInvalidArgument));
   EXPECT_THAT(Parse("+"), StatusIs(absl::StatusCode::kInvalidArgument));
   EXPECT_THAT(Parse("?"), StatusIs(absl::StatusCode::kInvalidArgument));
+  EXPECT_THAT(Parse(")"), StatusIs(absl::StatusCode::kInvalidArgument));
+  EXPECT_THAT(Parse("]"), StatusIs(absl::StatusCode::kInvalidArgument));
 }
 
 TEST_P(ParserTest, CharacterSequence) {
