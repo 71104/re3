@@ -193,6 +193,17 @@ absl::Status Parser::ParseCharacterClassEscapeCode(bool const negated, State* co
       }
       return UpdateCharacterClassEdge(negated, start_state, status_or_code.value(), stop_state_num);
     }
+    case '0':
+    case '1':
+    case '2':
+    case '3':
+    case '4':
+    case '5':
+    case '6':
+    case '7':
+    case '8':
+    case '9':
+      return absl::InvalidArgumentError("backreferences are not supported");
     default:
       return absl::InvalidArgumentError("invalid escape code");
   }
@@ -295,7 +306,18 @@ absl::StatusOr<TempNFA> Parser::ParseEscape() {
       }
       return MakeSingleCharacterNFA(status_or_code.value());
     }
-      // TODO: handle Unicode escape codes.
+    // TODO: handle Unicode escape codes.
+    case '0':
+    case '1':
+    case '2':
+    case '3':
+    case '4':
+    case '5':
+    case '6':
+    case '7':
+    case '8':
+    case '9':
+      return absl::InvalidArgumentError("backreferences are not supported");
     default:
       return absl::InvalidArgumentError("invalid escape code");
   }
