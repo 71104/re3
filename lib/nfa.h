@@ -35,10 +35,7 @@ class NFA final : public AutomatonInterface {
   bool Run(std::string_view input) const override;
 
  private:
-  // Internal recursive implementation of the running algorithm. The `visited` set is necessary to
-  // prevent overflowing the call stack in case there's a loop of epsilon-moves.
-  bool RunInternal(int32_t state, absl::flat_hash_set<int32_t> &visited,
-                   std::string_view input) const;
+  void EpsilonClosure(absl::flat_hash_set<int32_t> *states) const;
 
   States states_;
   int32_t initial_state_ = 0;
