@@ -730,6 +730,30 @@ TEST_P(ParserTest, CharacterSequenceWithMaybe) {
   EXPECT_FALSE(pattern->Run("dolorloremipsum"));
 }
 
+TEST_P(ParserTest, MultipleQuantifiersDisallowed) {
+  EXPECT_THAT(Parse("a**"), StatusIs(absl::StatusCode::kInvalidArgument));
+  EXPECT_THAT(Parse("a*+"), StatusIs(absl::StatusCode::kInvalidArgument));
+  EXPECT_THAT(Parse("a+*"), StatusIs(absl::StatusCode::kInvalidArgument));
+  EXPECT_THAT(Parse("a++"), StatusIs(absl::StatusCode::kInvalidArgument));
+  EXPECT_THAT(Parse("a?*"), StatusIs(absl::StatusCode::kInvalidArgument));
+  EXPECT_THAT(Parse("a?+"), StatusIs(absl::StatusCode::kInvalidArgument));
+}
+
+TEST_P(ParserTest, MultipleQuantifiersWithBrackets) {
+  auto const status_or_pattern = Parse("(a+)*");
+  EXPECT_OK(status_or_pattern);
+  auto const& pattern = status_or_pattern.value();
+  EXPECT_TRUE(pattern->Run(""));
+  EXPECT_TRUE(pattern->Run("a"));
+  EXPECT_FALSE(pattern->Run("b"));
+  EXPECT_TRUE(pattern->Run("aa"));
+  EXPECT_FALSE(pattern->Run("ab"));
+  EXPECT_FALSE(pattern->Run("ba"));
+  EXPECT_TRUE(pattern->Run("aaa"));
+  EXPECT_TRUE(pattern->Run("aaaa"));
+  EXPECT_TRUE(pattern->Run("aaaaa"));
+}
+
 TEST_P(ParserTest, EmptyOrEmpty) {
   auto const status_or_pattern = Parse("|");
   EXPECT_OK(status_or_pattern);
