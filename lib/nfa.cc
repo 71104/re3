@@ -18,8 +18,7 @@ bool NFA::Run(std::string_view input) const {
     input.remove_prefix(1);
     next_states.reserve(states_.size());
     for (auto const state_num : states) {
-      auto const& edges = states_[state_num];
-      for (auto const transition : edges[ch]) {
+      for (auto const transition : states_[state_num][ch]) {
         next_states.emplace(transition);
       }
       EpsilonClosure(&next_states);
@@ -35,8 +34,7 @@ void NFA::EpsilonClosure(absl::flat_hash_set<int32_t>* const states) const {
   do {
     new_state_found = false;
     for (auto const state_num : *states) {
-      auto const& edges = states_[state_num];
-      for (auto const transition : edges[0]) {
+      for (auto const transition : states_[state_num][0]) {
         auto const [it, inserted] = states->emplace(transition);
         new_state_found |= inserted;
       }
