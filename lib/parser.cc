@@ -387,19 +387,15 @@ absl::StatusOr<TempNFA> Parser::Parse1() {
     return status_or_nfa;
   }
   auto nfa = std::move(status_or_nfa).value();
-  if (!pattern_.empty()) {
-    if (absl::ConsumePrefix(&pattern_, "*")) {
-      nfa.RenameState(nfa.initial_state(), nfa.final_state());
-      return nfa;
-    }
-    if (absl::ConsumePrefix(&pattern_, "+")) {
-      nfa.AddEdge(0, nfa.final_state(), nfa.initial_state());
-      return nfa;
-    }
-    if (absl::ConsumePrefix(&pattern_, "?")) {
-      nfa.AddEdge(0, nfa.initial_state(), nfa.final_state());
-      return nfa;
-    }
+  if (pattern_.empty()) {
+    return nfa;
+  }
+  if (absl::ConsumePrefix(&pattern_, "*")) {
+    nfa.RenameState(nfa.initial_state(), nfa.final_state());
+  } else if (absl::ConsumePrefix(&pattern_, "+")) {
+    nfa.AddEdge(0, nfa.final_state(), nfa.initial_state());
+  } else if (absl::ConsumePrefix(&pattern_, "?")) {
+    nfa.AddEdge(0, nfa.initial_state(), nfa.final_state());
   }
   return nfa;
 }
