@@ -40,7 +40,7 @@ class Parser {
   TempNFA MakeNegatedCharacterClassNFA(std::string_view chars);
 
   static absl::Status UpdateCharacterClassEdge(bool negated, State* start_state, uint8_t ch,
-                                               int32_t stop_state_num);
+                                               int stop_state_num);
 
   // Called by `ParseCharacterClass` to parse escape codes. `negated` indicates whether the
   // character class is negated (i.e. it begins with ^). `state` is the NFA state to update with the
@@ -48,8 +48,7 @@ class Parser {
   // invalid.
   //
   // REQUIRES: the backslash before the escape code must have already been consumed.
-  absl::Status ParseCharacterClassEscapeCode(bool negated, State* start_state,
-                                             int32_t stop_state_num);
+  absl::Status ParseCharacterClassEscapeCode(bool negated, State* start_state, int stop_state_num);
 
   // Called by `Parse0` to parse character classes (i.e. square brackets).
   absl::StatusOr<TempNFA> ParseCharacterClass();
@@ -102,8 +101,8 @@ absl::StatusOr<int> Parser::ParseHexCode() {
 }
 
 TempNFA Parser::MakeSingleCharacterNFA(int const ch) {
-  int32_t const start = next_state_++;
-  int32_t const stop = next_state_++;
+  int const start = next_state_++;
+  int const stop = next_state_++;
   return TempNFA(
       {
           {start, MakeState({{ch, {stop}}})},
@@ -113,8 +112,8 @@ TempNFA Parser::MakeSingleCharacterNFA(int const ch) {
 }
 
 TempNFA Parser::MakeCharacterClassNFA(std::string_view const chars) {
-  int32_t const start = next_state_++;
-  int32_t const stop = next_state_++;
+  int const start = next_state_++;
+  int const stop = next_state_++;
   State state;
   for (uint8_t const ch : chars) {
     state[ch].emplace_back(stop);
@@ -128,8 +127,8 @@ TempNFA Parser::MakeCharacterClassNFA(std::string_view const chars) {
 }
 
 TempNFA Parser::MakeNegatedCharacterClassNFA(std::string_view const chars) {
-  int32_t const start = next_state_++;
-  int32_t const stop = next_state_++;
+  int const start = next_state_++;
+  int const stop = next_state_++;
   State state;
   for (int ch = 1; ch < 256; ++ch) {
     state[ch].emplace_back(stop);
@@ -146,7 +145,7 @@ TempNFA Parser::MakeNegatedCharacterClassNFA(std::string_view const chars) {
 }
 
 absl::Status Parser::UpdateCharacterClassEdge(bool const negated, State* const start_state,
-                                              uint8_t const ch, int32_t const stop_state_num) {
+                                              uint8_t const ch, int const stop_state_num) {
   if (negated) {
     (*start_state)[ch].clear();
   } else {
@@ -156,7 +155,7 @@ absl::Status Parser::UpdateCharacterClassEdge(bool const negated, State* const s
 }
 
 absl::Status Parser::ParseCharacterClassEscapeCode(bool const negated, State* const start_state,
-                                                   int32_t const stop_state_num) {
+                                                   int const stop_state_num) {
   if (pattern_.empty()) {
     return absl::InvalidArgumentError("invalid escape code");
   }
@@ -203,8 +202,8 @@ absl::StatusOr<TempNFA> Parser::ParseCharacterClass() {
   if (!absl::ConsumePrefix(&pattern_, "[")) {
     return absl::InvalidArgumentError("expected [");
   }
-  int32_t const start = next_state_++;
-  int32_t const stop = next_state_++;
+  int const start = next_state_++;
+  int const stop = next_state_++;
   State state;
   bool const negated = absl::ConsumePrefix(&pattern_, "^");
   if (negated) {
@@ -303,7 +302,7 @@ absl::StatusOr<TempNFA> Parser::ParseEscape() {
 }
 
 absl::StatusOr<TempNFA> Parser::Parse0() {
-  int32_t const start = next_state_++;
+  int const start = next_state_++;
   if (pattern_.empty()) {
     return TempNFA({{start, MakeState({})}}, start, start);
   }
@@ -317,7 +316,7 @@ absl::StatusOr<TempNFA> Parser::Parse0() {
     }
     return result;
   }
-  int32_t const stop = next_state_++;
+  int const stop = next_state_++;
   if (absl::ConsumePrefix(&pattern_, ".")) {
     absl::flat_hash_map<uint8_t, absl::InlinedVector<int32_t, 1>> edges;
     for (int ch = 1; ch < 256; ++ch) {
@@ -414,8 +413,8 @@ absl::StatusOr<TempNFA> Parser::Parse3() {
     if (!status_or_nfa.ok()) {
       return status_or_nfa;
     }
-    int32_t const initial_state = next_state_++;
-    int32_t const final_state = next_state_++;
+    int const initial_state = next_state_++;
+    int const final_state = next_state_++;
     nfa.Merge(std::move(status_or_nfa).value(), initial_state, final_state);
   }
   return nfa;

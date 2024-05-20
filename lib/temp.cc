@@ -42,7 +42,7 @@ bool TempNFA::IsDeterministic() const {
   return true;
 }
 
-void TempNFA::RenameState(int32_t const old_name, int32_t const new_name) {
+void TempNFA::RenameState(int const old_name, int const new_name) {
   auto const it = states_.find(old_name);
   if (it != states_.end()) {
     auto node = states_.extract(it);
@@ -86,7 +86,7 @@ void TempNFA::RenameAllStates(int32_t *const next_state) {
   final_state_ = state_map[final_state_];
 }
 
-void TempNFA::AddEdge(uint8_t const label, int32_t const from, int32_t const to) {
+void TempNFA::AddEdge(uint8_t const label, int const from, int const to) {
   states_[from][label].emplace_back(to);
 }
 
@@ -98,7 +98,7 @@ void TempNFA::Chain(TempNFA &&other) {
   final_state_ = other.final_state_;
 }
 
-void TempNFA::Merge(TempNFA &&other, int32_t const initial_state, int32_t const final_state) {
+void TempNFA::Merge(TempNFA &&other, int const initial_state, int const final_state) {
   for (auto &[state, edges] : other.states_) {
     MergeState(state, std::move(edges));
   }
@@ -119,7 +119,7 @@ std::unique_ptr<AutomatonInterface> TempNFA::Finalize() && {
   }
 }
 
-void TempNFA::MergeState(int32_t const state, State &&edges) {
+void TempNFA::MergeState(int const state, State &&edges) {
   auto const [it, inserted] = states_.try_emplace(state, std::move(edges));
   if (!inserted) {
     for (int ch = 0; ch < 256; ++ch) {
@@ -130,7 +130,7 @@ void TempNFA::MergeState(int32_t const state, State &&edges) {
   }
 }
 
-bool TempNFA::HasOnlyOneEpsilonMove(int32_t const state) const {
+bool TempNFA::HasOnlyOneEpsilonMove(int const state) const {
   auto const &edges = states_.find(state)->second;
   if (edges[0].size() != 1) {
     return false;
@@ -146,7 +146,7 @@ bool TempNFA::HasOnlyOneEpsilonMove(int32_t const state) const {
 bool TempNFA::CollapseNextEpsilonMove() {
   for (auto &[state, edges] : states_) {
     if (HasOnlyOneEpsilonMove(state)) {
-      int32_t const destination = edges[0][0];
+      int const destination = edges[0][0];
       if (state == destination || state != final_state_) {
         edges[0].clear();
         RenameState(destination, state);
@@ -167,7 +167,7 @@ DFA TempNFA::ToDFA() && {
   absl::flat_hash_map<int32_t, int32_t> state_map;
   DFA::States dfa_states;
   dfa_states.reserve(states_.size());
-  int32_t i = 0;
+  int i = 0;
   for (auto &[state, edges] : states_) {
     state_map.try_emplace(state, i++);
     DFA::State dfa_state;
@@ -196,7 +196,7 @@ NFA TempNFA::ToNFA() && {
   absl::flat_hash_map<int32_t, int32_t> state_map;
   NFA::States nfa_states;
   nfa_states.reserve(states_.size());
-  int32_t i = 0;
+  int i = 0;
   for (auto &[state, edges] : states_) {
     state_map.try_emplace(state, i++);
     nfa_states.emplace_back(std::move(edges));
