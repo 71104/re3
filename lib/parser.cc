@@ -59,6 +59,9 @@ class Parser {
   // Parses single character, escape code, dot, round brackets, square brackets, or end of input.
   absl::StatusOr<TempNFA> Parse0();
 
+  // Parses the content of the curly braces in quantifiers.
+  absl::StatusOr<std::pair<int, int>> ParseQuantifier();
+
   // Parses Kleene star, plus, question mark, or quantifier.
   absl::StatusOr<TempNFA> Parse1();
 
@@ -360,6 +363,9 @@ absl::StatusOr<TempNFA> Parser::Parse0() {
       return ParseCharacterClass();
     case ']':
       return absl::InvalidArgumentError("unmatched square bracket");
+    case '{':
+    case '}':
+      return absl::InvalidArgumentError("curly brackets in invalid position");
     case '\\':
       return ParseEscape();
     case '*':
@@ -381,6 +387,50 @@ absl::StatusOr<TempNFA> Parser::Parse0() {
   }
 }
 
+absl::StatusOr<std::pair<int, int>> Parser::ParseQuantifier() {
+  if (absl::ConsumePrefix(&pattern_, "}")) {
+    return std::make_pair(-1, -1);
+  }
+  if (pattern_.empty() || !absl::ascii_isdigit(pattern_[0])) {
+    return absl::InvalidArgumentError("invalid quantifier");
+  }
+  int ch = pattern_[0];
+  int min = ch - '0';
+  pattern_.remove_prefix(1);
+  if (ch != 0) {
+    while (!pattern_.empty() && absl::ascii_isdigit(pattern_[0])) {
+      min = min * 10 + (pattern_[0] - '0');
+      pattern_.remove_prefix(1);
+    }
+  }
+  if (absl::ConsumePrefix(&pattern_, "}")) {
+    return std::make_pair(min, min);
+  }
+  if (!absl::ConsumePrefix(&pattern_, ",")) {
+    return absl::InvalidArgumentError("invalid quantifier");
+  }
+  if (absl::ConsumePrefix(&pattern_, "}")) {
+    return std::make_pair(min, -1);
+  }
+  if (pattern_.empty() || !absl::ascii_isdigit(pattern_[0])) {
+    return absl::InvalidArgumentError("invalid quantifier");
+  }
+  ch = pattern_[0];
+  int max = ch - '0';
+  pattern_.remove_prefix(1);
+  if (ch != 0) {
+    while (!pattern_.empty() && absl::ascii_isdigit(pattern_[0])) {
+      max = max * 10 + (pattern_[0] - '0');
+      pattern_.remove_prefix(1);
+    }
+  }
+  if (absl::ConsumePrefix(&pattern_, "}")) {
+    return std::make_pair(min, max);
+  } else {
+    return absl::InvalidArgumentError("invalid quantifier");
+  }
+}
+
 absl::StatusOr<TempNFA> Parser::Parse1() {
   auto status_or_nfa = Parse0();
   if (!status_or_nfa.ok()) {
@@ -396,6 +446,36 @@ absl::StatusOr<TempNFA> Parser::Parse1() {
     nfa.AddEdge(0, nfa.final_state(), nfa.initial_state());
   } else if (absl::ConsumePrefix(&pattern_, "?")) {
     nfa.AddEdge(0, nfa.initial_state(), nfa.final_state());
+  } else if (absl::ConsumePrefix(&pattern_, "{")) {
+    auto const status_or_quantifier = ParseQuantifier();
+    if (!status_or_quantifier.ok()) {
+      return std::move(status_or_quantifier).status();
+    }
+    auto const [min, max] = status_or_quantifier.value();
+    if (min < 0) {
+      if (max >= 0) {
+        return absl::InvalidArgumentError("invalid quantifier");
+      }
+      nfa.RenameState(nfa.initial_state(), nfa.final_state());
+    } else {
+      auto piece = std::move(nfa);
+      int const start = next_state_++;
+      nfa = TempNFA({{start, MakeState({})}}, start, start);
+      for (int i = 0; i < min; ++i) {
+        nfa.Chain(piece);
+      }
+      if (max < 0) {
+        nfa.RenameState(nfa.initial_state(), nfa.final_state());
+      } else {
+        if (max < min) {
+          return absl::InvalidArgumentError("invalid quantifier");
+        }
+        piece.AddEdge(0, piece.initial_state(), piece.final_state());
+        for (int i = min; i < max; ++i) {
+          nfa.Chain(piece);
+        }
+      }
+    }
   }
   return nfa;
 }

@@ -714,6 +714,104 @@ TEST_P(ParserTest, Maybe) {
   EXPECT_FALSE(pattern->Run("ba"));
 }
 
+TEST_P(ParserTest, Many) {
+  auto const status_or_pattern = Parse("a{}");
+  EXPECT_OK(status_or_pattern);
+  auto const& pattern = status_or_pattern.value();
+  EXPECT_TRUE(pattern->Run(""));
+  EXPECT_TRUE(pattern->Run("a"));
+  EXPECT_TRUE(pattern->Run("aa"));
+  EXPECT_TRUE(pattern->Run("aaa"));
+  EXPECT_TRUE(pattern->Run("aaaa"));
+  EXPECT_TRUE(pattern->Run("aaaaa"));
+  EXPECT_FALSE(pattern->Run("b"));
+  EXPECT_FALSE(pattern->Run("ab"));
+  EXPECT_FALSE(pattern->Run("ba"));
+  EXPECT_FALSE(pattern->Run("aba"));
+  EXPECT_FALSE(pattern->Run("aabaa"));
+}
+
+TEST_P(ParserTest, ExactlyZero) {
+  auto const status_or_pattern = Parse("a{0}");
+  EXPECT_OK(status_or_pattern);
+  auto const& pattern = status_or_pattern.value();
+  EXPECT_TRUE(pattern->Run(""));
+  EXPECT_FALSE(pattern->Run("a"));
+  EXPECT_FALSE(pattern->Run("aa"));
+  EXPECT_FALSE(pattern->Run("aaa"));
+  EXPECT_FALSE(pattern->Run("b"));
+  EXPECT_FALSE(pattern->Run("ab"));
+  EXPECT_FALSE(pattern->Run("ba"));
+  EXPECT_FALSE(pattern->Run("aba"));
+  EXPECT_FALSE(pattern->Run("aabaa"));
+}
+
+TEST_P(ParserTest, ExactlyOne) {
+  auto const status_or_pattern = Parse("a{1}");
+  EXPECT_OK(status_or_pattern);
+  auto const& pattern = status_or_pattern.value();
+  EXPECT_FALSE(pattern->Run(""));
+  EXPECT_TRUE(pattern->Run("a"));
+  EXPECT_FALSE(pattern->Run("aa"));
+  EXPECT_FALSE(pattern->Run("aaa"));
+  EXPECT_FALSE(pattern->Run("b"));
+  EXPECT_FALSE(pattern->Run("ab"));
+  EXPECT_FALSE(pattern->Run("ba"));
+  EXPECT_FALSE(pattern->Run("aba"));
+  EXPECT_FALSE(pattern->Run("aabaa"));
+}
+
+TEST_P(ParserTest, ExactlyTwo) {
+  auto const status_or_pattern = Parse("a{2}");
+  EXPECT_OK(status_or_pattern);
+  auto const& pattern = status_or_pattern.value();
+  EXPECT_FALSE(pattern->Run(""));
+  EXPECT_FALSE(pattern->Run("a"));
+  EXPECT_TRUE(pattern->Run("aa"));
+  EXPECT_FALSE(pattern->Run("aaa"));
+  EXPECT_FALSE(pattern->Run("b"));
+  EXPECT_FALSE(pattern->Run("ab"));
+  EXPECT_FALSE(pattern->Run("ba"));
+  EXPECT_FALSE(pattern->Run("aba"));
+  EXPECT_FALSE(pattern->Run("aabaa"));
+}
+
+TEST_P(ParserTest, AtLeastZero) {
+  auto const status_or_pattern = Parse("a{0,}");
+  EXPECT_OK(status_or_pattern);
+  auto const& pattern = status_or_pattern.value();
+  EXPECT_TRUE(pattern->Run(""));
+  EXPECT_TRUE(pattern->Run("a"));
+  EXPECT_TRUE(pattern->Run("aa"));
+  EXPECT_TRUE(pattern->Run("aaa"));
+  EXPECT_TRUE(pattern->Run("aaaa"));
+  EXPECT_TRUE(pattern->Run("aaaaa"));
+  EXPECT_FALSE(pattern->Run("b"));
+  EXPECT_FALSE(pattern->Run("ab"));
+  EXPECT_FALSE(pattern->Run("ba"));
+  EXPECT_FALSE(pattern->Run("aba"));
+  EXPECT_FALSE(pattern->Run("aabaa"));
+}
+
+TEST_P(ParserTest, AtLeastOne) {
+  auto const status_or_pattern = Parse("a{1,}");
+  EXPECT_OK(status_or_pattern);
+  auto const& pattern = status_or_pattern.value();
+  EXPECT_FALSE(pattern->Run(""));
+  EXPECT_TRUE(pattern->Run("a"));
+  EXPECT_TRUE(pattern->Run("aa"));
+  EXPECT_TRUE(pattern->Run("aaa"));
+  EXPECT_TRUE(pattern->Run("aaaa"));
+  EXPECT_TRUE(pattern->Run("aaaaa"));
+  EXPECT_FALSE(pattern->Run("b"));
+  EXPECT_FALSE(pattern->Run("ab"));
+  EXPECT_FALSE(pattern->Run("ba"));
+  EXPECT_FALSE(pattern->Run("aba"));
+  EXPECT_FALSE(pattern->Run("aabaa"));
+}
+
+// TODO
+
 TEST_P(ParserTest, CharacterSequenceWithMaybe) {
   auto const status_or_pattern = Parse("lo?rem");
   EXPECT_OK(status_or_pattern);
@@ -733,10 +831,16 @@ TEST_P(ParserTest, CharacterSequenceWithMaybe) {
 TEST_P(ParserTest, MultipleQuantifiersDisallowed) {
   EXPECT_THAT(Parse("a**"), StatusIs(absl::StatusCode::kInvalidArgument));
   EXPECT_THAT(Parse("a*+"), StatusIs(absl::StatusCode::kInvalidArgument));
+  EXPECT_THAT(Parse("a*{}"), StatusIs(absl::StatusCode::kInvalidArgument));
   EXPECT_THAT(Parse("a+*"), StatusIs(absl::StatusCode::kInvalidArgument));
   EXPECT_THAT(Parse("a++"), StatusIs(absl::StatusCode::kInvalidArgument));
+  EXPECT_THAT(Parse("a+{}"), StatusIs(absl::StatusCode::kInvalidArgument));
   EXPECT_THAT(Parse("a?*"), StatusIs(absl::StatusCode::kInvalidArgument));
   EXPECT_THAT(Parse("a?+"), StatusIs(absl::StatusCode::kInvalidArgument));
+  EXPECT_THAT(Parse("a?{}"), StatusIs(absl::StatusCode::kInvalidArgument));
+  EXPECT_THAT(Parse("a{}*"), StatusIs(absl::StatusCode::kInvalidArgument));
+  EXPECT_THAT(Parse("a{}+"), StatusIs(absl::StatusCode::kInvalidArgument));
+  EXPECT_THAT(Parse("a{}{}"), StatusIs(absl::StatusCode::kInvalidArgument));
 }
 
 TEST_P(ParserTest, MultipleQuantifiersWithBrackets) {

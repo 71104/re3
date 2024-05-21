@@ -3,6 +3,7 @@
 
 #include <array>
 #include <cstdint>
+#include <memory>
 #include <string_view>
 #include <utility>
 #include <vector>
@@ -32,6 +33,8 @@ class DFA final : public AutomatonInterface {
   DFA &operator=(DFA const &) = default;
   DFA(DFA &&) noexcept = default;
   DFA &operator=(DFA &&) noexcept = default;
+
+  std::unique_ptr<AutomatonInterface> Clone() const override;
 
   bool Run(std::string_view input) const override;
 

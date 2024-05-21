@@ -72,7 +72,7 @@ class TempNFA {
   //
   // WARNING: this method will NOT rename states as necessary to avoid collisions; the caller is
   // responsible for calling `RenameAllStates` beforehand.
-  void Chain(TempNFA &&other);
+  void Chain(TempNFA other);
 
   // Merges `other` with this automaton, resulting in a new automaton that accepts both the strings
   // of the original `this` and those of `other`. `initial_state` and `final_state` must be newly

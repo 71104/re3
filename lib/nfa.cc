@@ -1,12 +1,15 @@
 #include "lib/nfa.h"
 
 #include <cstdint>
+#include <memory>
 #include <string_view>
 #include <utility>
 
 #include "absl/container/flat_hash_set.h"
 
 namespace re3 {
+
+std::unique_ptr<AutomatonInterface> NFA::Clone() const { return std::make_unique<NFA>(*this); }
 
 bool NFA::Run(std::string_view input) const {
   absl::flat_hash_set<int32_t> states{initial_state_};

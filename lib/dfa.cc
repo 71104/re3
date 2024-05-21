@@ -1,8 +1,11 @@
 #include "lib/dfa.h"
 
+#include <memory>
 #include <string_view>
 
 namespace re3 {
+
+std::unique_ptr<AutomatonInterface> DFA::Clone() const { return std::make_unique<DFA>(*this); }
 
 bool DFA::Run(std::string_view input) const {
   int32_t state = initial_state_;

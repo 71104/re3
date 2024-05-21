@@ -60,6 +60,7 @@ cc_library(
     hdrs = ["re3.h"],
     visibility = ["//visibility:public"],
     deps = [
+        ":automaton",
         ":parser",
         "@com_google_absl//absl/status:statusor",
     ],

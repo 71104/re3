@@ -3,6 +3,7 @@
 
 #include <array>
 #include <cstdint>
+#include <memory>
 #include <string_view>
 #include <utility>
 #include <vector>
@@ -31,6 +32,8 @@ class NFA final : public AutomatonInterface {
   NFA &operator=(NFA const &) = default;
   NFA(NFA &&) noexcept = default;
   NFA &operator=(NFA &&) noexcept = default;
+
+  std::unique_ptr<AutomatonInterface> Clone() const override;
 
   bool Run(std::string_view input) const override;
 

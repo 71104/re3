@@ -90,7 +90,7 @@ void TempNFA::AddEdge(uint8_t const label, int const from, int const to) {
   states_[from][label].emplace_back(to);
 }
 
-void TempNFA::Chain(TempNFA &&other) {
+void TempNFA::Chain(TempNFA other) {
   RenameState(final_state_, other.initial_state_);
   for (auto &[state, edges] : other.states_) {
     MergeState(state, std::move(edges));
