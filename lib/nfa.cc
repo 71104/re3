@@ -24,8 +24,8 @@ bool NFA::Run(std::string_view input) const {
       for (auto const transition : states_[state_num][ch]) {
         next_states.emplace(transition);
       }
-      EpsilonClosure(&next_states);
     }
+    EpsilonClosure(&next_states);
     states = std::move(next_states);
     next_states = absl::flat_hash_set<int32_t>();
   }
