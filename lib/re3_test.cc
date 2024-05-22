@@ -776,6 +776,24 @@ TEST_P(ParserTest, ExactlyTwo) {
   EXPECT_FALSE(pattern->Run("aabaa"));
 }
 
+TEST_P(ParserTest, ExactlyFourtyTwo) {
+  auto const status_or_pattern = Parse("a{42}");
+  EXPECT_OK(status_or_pattern);
+  auto const& pattern = status_or_pattern.value();
+  EXPECT_FALSE(pattern->Run(""));
+  EXPECT_FALSE(pattern->Run("a"));
+  EXPECT_FALSE(pattern->Run("aa"));
+  EXPECT_FALSE(pattern->Run("aaa"));
+  EXPECT_FALSE(pattern->Run("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"));
+  EXPECT_TRUE(pattern->Run("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"));
+  EXPECT_FALSE(pattern->Run("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"));
+  EXPECT_FALSE(pattern->Run("b"));
+  EXPECT_FALSE(pattern->Run("ab"));
+  EXPECT_FALSE(pattern->Run("ba"));
+  EXPECT_FALSE(pattern->Run("aba"));
+  EXPECT_FALSE(pattern->Run("aabaa"));
+}
+
 TEST_P(ParserTest, AtLeastZero) {
   auto const status_or_pattern = Parse("a{0,}");
   EXPECT_OK(status_or_pattern);
@@ -810,7 +828,164 @@ TEST_P(ParserTest, AtLeastOne) {
   EXPECT_FALSE(pattern->Run("aabaa"));
 }
 
-// TODO
+TEST_P(ParserTest, AtLeastTwo) {
+  auto const status_or_pattern = Parse("a{2,}");
+  EXPECT_OK(status_or_pattern);
+  auto const& pattern = status_or_pattern.value();
+  EXPECT_FALSE(pattern->Run(""));
+  EXPECT_FALSE(pattern->Run("a"));
+  EXPECT_TRUE(pattern->Run("aa"));
+  EXPECT_TRUE(pattern->Run("aaa"));
+  EXPECT_TRUE(pattern->Run("aaaa"));
+  EXPECT_TRUE(pattern->Run("aaaaa"));
+  EXPECT_FALSE(pattern->Run("b"));
+  EXPECT_FALSE(pattern->Run("ab"));
+  EXPECT_FALSE(pattern->Run("ba"));
+  EXPECT_FALSE(pattern->Run("aba"));
+  EXPECT_FALSE(pattern->Run("aabaa"));
+}
+
+TEST_P(ParserTest, AtLeastFourtyTwo) {
+  auto const status_or_pattern = Parse("a{42,}");
+  EXPECT_OK(status_or_pattern);
+  auto const& pattern = status_or_pattern.value();
+  EXPECT_FALSE(pattern->Run(""));
+  EXPECT_FALSE(pattern->Run("a"));
+  EXPECT_FALSE(pattern->Run("aa"));
+  EXPECT_FALSE(pattern->Run("aaa"));
+  EXPECT_FALSE(pattern->Run("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"));
+  EXPECT_TRUE(pattern->Run("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"));
+  EXPECT_TRUE(pattern->Run("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"));
+  EXPECT_TRUE(pattern->Run("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"));
+  EXPECT_FALSE(pattern->Run("b"));
+  EXPECT_FALSE(pattern->Run("ab"));
+  EXPECT_FALSE(pattern->Run("ba"));
+  EXPECT_FALSE(pattern->Run("aba"));
+  EXPECT_FALSE(pattern->Run("aabaa"));
+}
+
+TEST_P(ParserTest, BetweenZeroAndZero) {
+  auto const status_or_pattern = Parse("a{0,0}");
+  EXPECT_OK(status_or_pattern);
+  auto const& pattern = status_or_pattern.value();
+  EXPECT_TRUE(pattern->Run(""));
+  EXPECT_FALSE(pattern->Run("a"));
+  EXPECT_FALSE(pattern->Run("aa"));
+  EXPECT_FALSE(pattern->Run("aaa"));
+  EXPECT_FALSE(pattern->Run("aaaa"));
+  EXPECT_FALSE(pattern->Run("aaaaa"));
+  EXPECT_FALSE(pattern->Run("b"));
+  EXPECT_FALSE(pattern->Run("ab"));
+  EXPECT_FALSE(pattern->Run("ba"));
+  EXPECT_FALSE(pattern->Run("aba"));
+  EXPECT_FALSE(pattern->Run("aabaa"));
+}
+
+TEST_P(ParserTest, BetweenZeroAndOne) {
+  auto const status_or_pattern = Parse("a{0,1}");
+  EXPECT_OK(status_or_pattern);
+  auto const& pattern = status_or_pattern.value();
+  EXPECT_TRUE(pattern->Run(""));
+  EXPECT_TRUE(pattern->Run("a"));
+  EXPECT_FALSE(pattern->Run("aa"));
+  EXPECT_FALSE(pattern->Run("aaa"));
+  EXPECT_FALSE(pattern->Run("aaaa"));
+  EXPECT_FALSE(pattern->Run("aaaaa"));
+  EXPECT_FALSE(pattern->Run("b"));
+  EXPECT_FALSE(pattern->Run("ab"));
+  EXPECT_FALSE(pattern->Run("ba"));
+  EXPECT_FALSE(pattern->Run("aba"));
+  EXPECT_FALSE(pattern->Run("aabaa"));
+}
+
+TEST_P(ParserTest, BetweenZeroAndTwo) {
+  auto const status_or_pattern = Parse("a{0,2}");
+  EXPECT_OK(status_or_pattern);
+  auto const& pattern = status_or_pattern.value();
+  EXPECT_TRUE(pattern->Run(""));
+  EXPECT_TRUE(pattern->Run("a"));
+  EXPECT_TRUE(pattern->Run("aa"));
+  EXPECT_FALSE(pattern->Run("aaa"));
+  EXPECT_FALSE(pattern->Run("aaaa"));
+  EXPECT_FALSE(pattern->Run("aaaaa"));
+  EXPECT_FALSE(pattern->Run("b"));
+  EXPECT_FALSE(pattern->Run("ab"));
+  EXPECT_FALSE(pattern->Run("ba"));
+  EXPECT_FALSE(pattern->Run("aba"));
+  EXPECT_FALSE(pattern->Run("aabaa"));
+}
+
+TEST_P(ParserTest, BetweenOneAndOne) {
+  auto const status_or_pattern = Parse("a{1,1}");
+  EXPECT_OK(status_or_pattern);
+  auto const& pattern = status_or_pattern.value();
+  EXPECT_FALSE(pattern->Run(""));
+  EXPECT_TRUE(pattern->Run("a"));
+  EXPECT_FALSE(pattern->Run("aa"));
+  EXPECT_FALSE(pattern->Run("aaa"));
+  EXPECT_FALSE(pattern->Run("aaaa"));
+  EXPECT_FALSE(pattern->Run("aaaaa"));
+  EXPECT_FALSE(pattern->Run("b"));
+  EXPECT_FALSE(pattern->Run("ab"));
+  EXPECT_FALSE(pattern->Run("ba"));
+  EXPECT_FALSE(pattern->Run("aba"));
+  EXPECT_FALSE(pattern->Run("aabaa"));
+}
+
+TEST_P(ParserTest, BetweenOneAndTwo) {
+  auto const status_or_pattern = Parse("a{1,2}");
+  EXPECT_OK(status_or_pattern);
+  auto const& pattern = status_or_pattern.value();
+  EXPECT_FALSE(pattern->Run(""));
+  EXPECT_TRUE(pattern->Run("a"));
+  EXPECT_TRUE(pattern->Run("aa"));
+  EXPECT_FALSE(pattern->Run("aaa"));
+  EXPECT_FALSE(pattern->Run("aaaa"));
+  EXPECT_FALSE(pattern->Run("aaaaa"));
+  EXPECT_FALSE(pattern->Run("b"));
+  EXPECT_FALSE(pattern->Run("ab"));
+  EXPECT_FALSE(pattern->Run("ba"));
+  EXPECT_FALSE(pattern->Run("aba"));
+  EXPECT_FALSE(pattern->Run("aabaa"));
+}
+
+TEST_P(ParserTest, BetweenTwoAndTwo) {
+  auto const status_or_pattern = Parse("a{2,2}");
+  EXPECT_OK(status_or_pattern);
+  auto const& pattern = status_or_pattern.value();
+  EXPECT_FALSE(pattern->Run(""));
+  EXPECT_FALSE(pattern->Run("a"));
+  EXPECT_TRUE(pattern->Run("aa"));
+  EXPECT_FALSE(pattern->Run("aaa"));
+  EXPECT_FALSE(pattern->Run("aaaa"));
+  EXPECT_FALSE(pattern->Run("aaaaa"));
+  EXPECT_FALSE(pattern->Run("b"));
+  EXPECT_FALSE(pattern->Run("ab"));
+  EXPECT_FALSE(pattern->Run("ba"));
+  EXPECT_FALSE(pattern->Run("aba"));
+  EXPECT_FALSE(pattern->Run("aabaa"));
+}
+
+TEST_P(ParserTest, BetweenFourtyTwoAndFourtyFive) {
+  auto const status_or_pattern = Parse("a{42,45}");
+  EXPECT_OK(status_or_pattern);
+  auto const& pattern = status_or_pattern.value();
+  EXPECT_FALSE(pattern->Run(""));
+  EXPECT_FALSE(pattern->Run("a"));
+  EXPECT_FALSE(pattern->Run("aa"));
+  EXPECT_FALSE(pattern->Run("aaa"));
+  EXPECT_FALSE(pattern->Run("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"));
+  EXPECT_TRUE(pattern->Run("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"));
+  EXPECT_TRUE(pattern->Run("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"));
+  EXPECT_TRUE(pattern->Run("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"));
+  EXPECT_TRUE(pattern->Run("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"));
+  EXPECT_FALSE(pattern->Run("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"));
+  EXPECT_FALSE(pattern->Run("b"));
+  EXPECT_FALSE(pattern->Run("ab"));
+  EXPECT_FALSE(pattern->Run("ba"));
+  EXPECT_FALSE(pattern->Run("aba"));
+  EXPECT_FALSE(pattern->Run("aabaa"));
+}
 
 TEST_P(ParserTest, CharacterSequenceWithMaybe) {
   auto const status_or_pattern = Parse("lo?rem");
@@ -826,6 +1001,20 @@ TEST_P(ParserTest, CharacterSequenceWithMaybe) {
   EXPECT_FALSE(pattern->Run("loremlorem"));
   EXPECT_FALSE(pattern->Run("loremipsum"));
   EXPECT_FALSE(pattern->Run("dolorloremipsum"));
+}
+
+TEST_P(ParserTest, InvalidQuantifiers) {
+  EXPECT_THAT(Parse("a{ }"), StatusIs(absl::StatusCode::kInvalidArgument));
+  EXPECT_THAT(Parse("a{2,1}"), StatusIs(absl::StatusCode::kInvalidArgument));
+  EXPECT_THAT(Parse("a{ 2,3}"), StatusIs(absl::StatusCode::kInvalidArgument));
+  EXPECT_THAT(Parse("a{2 ,3}"), StatusIs(absl::StatusCode::kInvalidArgument));
+  EXPECT_THAT(Parse("a{2, 3}"), StatusIs(absl::StatusCode::kInvalidArgument));
+  EXPECT_THAT(Parse("a{2,3 }"), StatusIs(absl::StatusCode::kInvalidArgument));
+  EXPECT_THAT(Parse("a{1001}"), StatusIs(absl::StatusCode::kInvalidArgument));
+  EXPECT_THAT(Parse("a{1002}"), StatusIs(absl::StatusCode::kInvalidArgument));
+  EXPECT_THAT(Parse("a{1001,}"), StatusIs(absl::StatusCode::kInvalidArgument));
+  EXPECT_THAT(Parse("a{10,1001}"), StatusIs(absl::StatusCode::kInvalidArgument));
+  EXPECT_THAT(Parse("a{10,1002}"), StatusIs(absl::StatusCode::kInvalidArgument));
 }
 
 TEST_P(ParserTest, MultipleQuantifiersDisallowed) {
@@ -992,6 +1181,8 @@ TEST_P(ParserTest, HeavyBacktracker) {
   EXPECT_OK(status_or_pattern);
   auto const& pattern = status_or_pattern.value();
   EXPECT_FALSE(pattern->Run(""));
+  EXPECT_FALSE(pattern->Run("b"));
+  EXPECT_FALSE(pattern->Run("ab"));
   EXPECT_FALSE(pattern->Run("a"));
   EXPECT_FALSE(pattern->Run("aa"));
   EXPECT_FALSE(pattern->Run("aaaaaaaaaaaaaaaaaaaaaaaaaaaaa"));

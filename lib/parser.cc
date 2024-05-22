@@ -20,6 +20,8 @@ namespace {
 // Parses a regular expression and compiles it into a runnable automaton.
 class Parser {
  public:
+  static inline int constexpr kMaxNumericQuantifier = 1000;
+
   // Constructs a parser to parse the provided regular expression `pattern`.
   explicit Parser(std::string_view const pattern) : pattern_(pattern) {}
 
@@ -400,6 +402,10 @@ absl::StatusOr<std::pair<int, int>> Parser::ParseQuantifier() {
   if (ch != 0) {
     while (!pattern_.empty() && absl::ascii_isdigit(pattern_[0])) {
       min = min * 10 + (pattern_[0] - '0');
+      if (min > kMaxNumericQuantifier) {
+        return absl::InvalidArgumentError(
+            "numeric quantifiers greater than 1000 are not supported");
+      }
       pattern_.remove_prefix(1);
     }
   }
@@ -421,6 +427,10 @@ absl::StatusOr<std::pair<int, int>> Parser::ParseQuantifier() {
   if (ch != 0) {
     while (!pattern_.empty() && absl::ascii_isdigit(pattern_[0])) {
       max = max * 10 + (pattern_[0] - '0');
+      if (max > kMaxNumericQuantifier) {
+        return absl::InvalidArgumentError(
+            "numeric quantifiers greater than 1000 are not supported");
+      }
       pattern_.remove_prefix(1);
     }
   }
@@ -462,16 +472,20 @@ absl::StatusOr<TempNFA> Parser::Parse1() {
       int const start = next_state_++;
       nfa = TempNFA({{start, MakeState({})}}, start, start);
       for (int i = 0; i < min; ++i) {
+        piece.RenameAllStates(&next_state_);
         nfa.Chain(piece);
       }
       if (max < 0) {
-        nfa.RenameState(nfa.initial_state(), nfa.final_state());
+        piece.RenameState(piece.initial_state(), piece.final_state());
+        piece.RenameAllStates(&next_state_);
+        nfa.Chain(std::move(piece));
       } else {
         if (max < min) {
           return absl::InvalidArgumentError("invalid quantifier");
         }
         piece.AddEdge(0, piece.initial_state(), piece.final_state());
         for (int i = min; i < max; ++i) {
+          piece.RenameAllStates(&next_state_);
           nfa.Chain(piece);
         }
       }
