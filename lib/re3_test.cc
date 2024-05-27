@@ -1187,6 +1187,8 @@ TEST_P(ParserTest, ChainLoops) {
   EXPECT_TRUE(pattern->Run("aa"));
   EXPECT_TRUE(pattern->Run("b"));
   EXPECT_TRUE(pattern->Run("bb"));
+  EXPECT_FALSE(pattern->Run("c"));
+  EXPECT_FALSE(pattern->Run("cc"));
   EXPECT_TRUE(pattern->Run("ab"));
   EXPECT_TRUE(pattern->Run("aab"));
   EXPECT_TRUE(pattern->Run("abb"));
@@ -1195,6 +1197,10 @@ TEST_P(ParserTest, ChainLoops) {
   EXPECT_FALSE(pattern->Run("baa"));
   EXPECT_FALSE(pattern->Run("aba"));
   EXPECT_FALSE(pattern->Run("bab"));
+  EXPECT_FALSE(pattern->Run("ac"));
+  EXPECT_FALSE(pattern->Run("ca"));
+  EXPECT_FALSE(pattern->Run("bc"));
+  EXPECT_FALSE(pattern->Run("cb"));
 }
 
 // TODO
