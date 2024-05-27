@@ -237,13 +237,18 @@ absl::StatusOr<TempNFA> Parser::ParseCharacterClass() {
         return status;
       }
     } else {
-      // TODO: character ranges
-      uint8_t const ch = pattern_[0];
+      uint8_t const ch1 = pattern_[0];
       pattern_.remove_prefix(1);
-      if (negated) {
-        state[ch].clear();
+      if (pattern_.size() > 2 && pattern_[0] == '-' && pattern_[1] != ']') {
+        pattern_.remove_prefix(2);
+        // TODO: ranges
+        return absl::UnimplementedError("ranges in character classes");
       } else {
-        state[ch].emplace_back(stop);
+        if (negated) {
+          state[ch1].clear();
+        } else {
+          state[ch1].emplace_back(stop);
+        }
       }
     }
   }

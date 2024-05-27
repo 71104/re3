@@ -1178,6 +1178,25 @@ TEST_P(ParserTest, EpsilonLoop) {
   EXPECT_FALSE(pattern->Run("ba"));
 }
 
+TEST_P(ParserTest, ChainLoops) {
+  auto const status_or_pattern = Parse("a*b*");
+  EXPECT_OK(status_or_pattern);
+  auto const& pattern = status_or_pattern.value();
+  EXPECT_TRUE(pattern->Run(""));
+  EXPECT_TRUE(pattern->Run("a"));
+  EXPECT_TRUE(pattern->Run("aa"));
+  EXPECT_TRUE(pattern->Run("b"));
+  EXPECT_TRUE(pattern->Run("bb"));
+  EXPECT_TRUE(pattern->Run("ab"));
+  EXPECT_TRUE(pattern->Run("aab"));
+  EXPECT_TRUE(pattern->Run("abb"));
+  EXPECT_FALSE(pattern->Run("ba"));
+  EXPECT_FALSE(pattern->Run("bba"));
+  EXPECT_FALSE(pattern->Run("baa"));
+  EXPECT_FALSE(pattern->Run("aba"));
+  EXPECT_FALSE(pattern->Run("bab"));
+}
+
 // TODO
 
 TEST_P(ParserTest, HeavyBacktracker) {
