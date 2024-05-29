@@ -1442,6 +1442,8 @@ TEST_P(ParserTest, HeavyBacktracker) {
   EXPECT_FALSE(pattern->Run("ab"));
   EXPECT_FALSE(pattern->Run("a"));
   EXPECT_FALSE(pattern->Run("aa"));
+  EXPECT_FALSE(pattern->Run("aaa"));
+  EXPECT_FALSE(pattern->Run("aaaaaaaaaaaaaaaaaaaaaaaaaaaa"));
   EXPECT_FALSE(pattern->Run("aaaaaaaaaaaaaaaaaaaaaaaaaaaaa"));
   EXPECT_TRUE(pattern->Run("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"));
   EXPECT_TRUE(pattern->Run("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"));
@@ -1475,6 +1477,7 @@ TEST_P(ParserTest, HeavyBacktracker) {
   EXPECT_TRUE(pattern->Run("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"));
   EXPECT_TRUE(pattern->Run("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"));
   EXPECT_FALSE(pattern->Run("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"));
+  EXPECT_FALSE(pattern->Run("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"));
 }
 
 INSTANTIATE_TEST_SUITE_P(ParserTest, ParserTest, Values(false, true));
