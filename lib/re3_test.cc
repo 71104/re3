@@ -1162,8 +1162,6 @@ TEST_P(ParserTest, IpsumInBrackets) {
   EXPECT_TRUE(pattern->Run("loremipsumdolor"));
 }
 
-// TODO
-
 TEST_P(ParserTest, EpsilonLoop) {
   auto const status_or_pattern = Parse("(|a)+");
   EXPECT_OK(status_or_pattern);
@@ -1262,6 +1260,35 @@ TEST_P(ParserTest, ChainStarAndMaybe) {
   EXPECT_FALSE(pattern->Run("cb"));
 }
 
+TEST_P(ParserTest, ChainStarAndQuantifier) {
+  auto const status_or_pattern = Parse("a*b{2}");
+  EXPECT_OK(status_or_pattern);
+  auto const& pattern = status_or_pattern.value();
+  EXPECT_FALSE(pattern->Run(""));
+  EXPECT_FALSE(pattern->Run("a"));
+  EXPECT_FALSE(pattern->Run("aa"));
+  EXPECT_FALSE(pattern->Run("aaa"));
+  EXPECT_FALSE(pattern->Run("b"));
+  EXPECT_TRUE(pattern->Run("bb"));
+  EXPECT_FALSE(pattern->Run("bbb"));
+  EXPECT_FALSE(pattern->Run("c"));
+  EXPECT_FALSE(pattern->Run("cc"));
+  EXPECT_FALSE(pattern->Run("ab"));
+  EXPECT_FALSE(pattern->Run("aab"));
+  EXPECT_TRUE(pattern->Run("abb"));
+  EXPECT_TRUE(pattern->Run("aabb"));
+  EXPECT_FALSE(pattern->Run("aabbb"));
+  EXPECT_FALSE(pattern->Run("ba"));
+  EXPECT_FALSE(pattern->Run("bba"));
+  EXPECT_FALSE(pattern->Run("baa"));
+  EXPECT_FALSE(pattern->Run("aba"));
+  EXPECT_FALSE(pattern->Run("bab"));
+  EXPECT_FALSE(pattern->Run("ac"));
+  EXPECT_FALSE(pattern->Run("ca"));
+  EXPECT_FALSE(pattern->Run("bc"));
+  EXPECT_FALSE(pattern->Run("cb"));
+}
+
 TEST_P(ParserTest, ChainPlusAndStar) {
   auto const status_or_pattern = Parse("a+b*");
   EXPECT_OK(status_or_pattern);
@@ -1346,6 +1373,35 @@ TEST_P(ParserTest, ChainPlusAndMaybe) {
   EXPECT_FALSE(pattern->Run("cb"));
 }
 
+TEST_P(ParserTest, ChainPlusAndQuantifier) {
+  auto const status_or_pattern = Parse("a+b{2}");
+  EXPECT_OK(status_or_pattern);
+  auto const& pattern = status_or_pattern.value();
+  EXPECT_FALSE(pattern->Run(""));
+  EXPECT_FALSE(pattern->Run("a"));
+  EXPECT_FALSE(pattern->Run("aa"));
+  EXPECT_FALSE(pattern->Run("aaa"));
+  EXPECT_FALSE(pattern->Run("b"));
+  EXPECT_FALSE(pattern->Run("bb"));
+  EXPECT_FALSE(pattern->Run("bbb"));
+  EXPECT_FALSE(pattern->Run("c"));
+  EXPECT_FALSE(pattern->Run("cc"));
+  EXPECT_FALSE(pattern->Run("ab"));
+  EXPECT_FALSE(pattern->Run("aab"));
+  EXPECT_TRUE(pattern->Run("abb"));
+  EXPECT_TRUE(pattern->Run("aabb"));
+  EXPECT_FALSE(pattern->Run("aabbb"));
+  EXPECT_FALSE(pattern->Run("ba"));
+  EXPECT_FALSE(pattern->Run("bba"));
+  EXPECT_FALSE(pattern->Run("baa"));
+  EXPECT_FALSE(pattern->Run("aba"));
+  EXPECT_FALSE(pattern->Run("bab"));
+  EXPECT_FALSE(pattern->Run("ac"));
+  EXPECT_FALSE(pattern->Run("ca"));
+  EXPECT_FALSE(pattern->Run("bc"));
+  EXPECT_FALSE(pattern->Run("cb"));
+}
+
 TEST_P(ParserTest, ChainMaybeAndStar) {
   auto const status_or_pattern = Parse("a?b*");
   EXPECT_OK(status_or_pattern);
@@ -1419,6 +1475,153 @@ TEST_P(ParserTest, ChainMaybeAndMaybe) {
   EXPECT_FALSE(pattern->Run("aab"));
   EXPECT_FALSE(pattern->Run("abb"));
   EXPECT_FALSE(pattern->Run("aabb"));
+  EXPECT_FALSE(pattern->Run("ba"));
+  EXPECT_FALSE(pattern->Run("bba"));
+  EXPECT_FALSE(pattern->Run("baa"));
+  EXPECT_FALSE(pattern->Run("aba"));
+  EXPECT_FALSE(pattern->Run("bab"));
+  EXPECT_FALSE(pattern->Run("ac"));
+  EXPECT_FALSE(pattern->Run("ca"));
+  EXPECT_FALSE(pattern->Run("bc"));
+  EXPECT_FALSE(pattern->Run("cb"));
+}
+
+TEST_P(ParserTest, ChainMaybeAndQuantifier) {
+  auto const status_or_pattern = Parse("a?b{2}");
+  EXPECT_OK(status_or_pattern);
+  auto const& pattern = status_or_pattern.value();
+  EXPECT_FALSE(pattern->Run(""));
+  EXPECT_FALSE(pattern->Run("a"));
+  EXPECT_FALSE(pattern->Run("aa"));
+  EXPECT_FALSE(pattern->Run("aaa"));
+  EXPECT_FALSE(pattern->Run("b"));
+  EXPECT_TRUE(pattern->Run("bb"));
+  EXPECT_FALSE(pattern->Run("bbb"));
+  EXPECT_FALSE(pattern->Run("c"));
+  EXPECT_FALSE(pattern->Run("cc"));
+  EXPECT_FALSE(pattern->Run("ab"));
+  EXPECT_FALSE(pattern->Run("aab"));
+  EXPECT_TRUE(pattern->Run("abb"));
+  EXPECT_FALSE(pattern->Run("aabb"));
+  EXPECT_FALSE(pattern->Run("aabbb"));
+  EXPECT_FALSE(pattern->Run("ba"));
+  EXPECT_FALSE(pattern->Run("bba"));
+  EXPECT_FALSE(pattern->Run("baa"));
+  EXPECT_FALSE(pattern->Run("aba"));
+  EXPECT_FALSE(pattern->Run("bab"));
+  EXPECT_FALSE(pattern->Run("ac"));
+  EXPECT_FALSE(pattern->Run("ca"));
+  EXPECT_FALSE(pattern->Run("bc"));
+  EXPECT_FALSE(pattern->Run("cb"));
+}
+
+TEST_P(ParserTest, ChainQuantifierAndStar) {
+  auto const status_or_pattern = Parse("a{2}b*");
+  EXPECT_OK(status_or_pattern);
+  auto const& pattern = status_or_pattern.value();
+  EXPECT_FALSE(pattern->Run(""));
+  EXPECT_FALSE(pattern->Run("a"));
+  EXPECT_TRUE(pattern->Run("aa"));
+  EXPECT_FALSE(pattern->Run("aaa"));
+  EXPECT_FALSE(pattern->Run("b"));
+  EXPECT_FALSE(pattern->Run("bb"));
+  EXPECT_FALSE(pattern->Run("bbb"));
+  EXPECT_FALSE(pattern->Run("c"));
+  EXPECT_FALSE(pattern->Run("cc"));
+  EXPECT_FALSE(pattern->Run("ab"));
+  EXPECT_TRUE(pattern->Run("aab"));
+  EXPECT_FALSE(pattern->Run("abb"));
+  EXPECT_TRUE(pattern->Run("aabb"));
+  EXPECT_FALSE(pattern->Run("aaabb"));
+  EXPECT_FALSE(pattern->Run("ba"));
+  EXPECT_FALSE(pattern->Run("bba"));
+  EXPECT_FALSE(pattern->Run("baa"));
+  EXPECT_FALSE(pattern->Run("aba"));
+  EXPECT_FALSE(pattern->Run("bab"));
+  EXPECT_FALSE(pattern->Run("ac"));
+  EXPECT_FALSE(pattern->Run("ca"));
+  EXPECT_FALSE(pattern->Run("bc"));
+  EXPECT_FALSE(pattern->Run("cb"));
+}
+
+TEST_P(ParserTest, ChainQuantifierAndPlus) {
+  auto const status_or_pattern = Parse("a{2}b+");
+  EXPECT_OK(status_or_pattern);
+  auto const& pattern = status_or_pattern.value();
+  EXPECT_FALSE(pattern->Run(""));
+  EXPECT_FALSE(pattern->Run("a"));
+  EXPECT_FALSE(pattern->Run("aa"));
+  EXPECT_FALSE(pattern->Run("aaa"));
+  EXPECT_FALSE(pattern->Run("b"));
+  EXPECT_FALSE(pattern->Run("bb"));
+  EXPECT_FALSE(pattern->Run("bbb"));
+  EXPECT_FALSE(pattern->Run("c"));
+  EXPECT_FALSE(pattern->Run("cc"));
+  EXPECT_FALSE(pattern->Run("ab"));
+  EXPECT_TRUE(pattern->Run("aab"));
+  EXPECT_FALSE(pattern->Run("abb"));
+  EXPECT_TRUE(pattern->Run("aabb"));
+  EXPECT_FALSE(pattern->Run("aaabb"));
+  EXPECT_FALSE(pattern->Run("ba"));
+  EXPECT_FALSE(pattern->Run("bba"));
+  EXPECT_FALSE(pattern->Run("baa"));
+  EXPECT_FALSE(pattern->Run("aba"));
+  EXPECT_FALSE(pattern->Run("bab"));
+  EXPECT_FALSE(pattern->Run("ac"));
+  EXPECT_FALSE(pattern->Run("ca"));
+  EXPECT_FALSE(pattern->Run("bc"));
+  EXPECT_FALSE(pattern->Run("cb"));
+}
+
+TEST_P(ParserTest, ChainQuantifierAndMaybe) {
+  auto const status_or_pattern = Parse("a{2}b?");
+  EXPECT_OK(status_or_pattern);
+  auto const& pattern = status_or_pattern.value();
+  EXPECT_FALSE(pattern->Run(""));
+  EXPECT_FALSE(pattern->Run("a"));
+  EXPECT_TRUE(pattern->Run("aa"));
+  EXPECT_FALSE(pattern->Run("aaa"));
+  EXPECT_FALSE(pattern->Run("b"));
+  EXPECT_FALSE(pattern->Run("bb"));
+  EXPECT_FALSE(pattern->Run("bbb"));
+  EXPECT_FALSE(pattern->Run("c"));
+  EXPECT_FALSE(pattern->Run("cc"));
+  EXPECT_FALSE(pattern->Run("ab"));
+  EXPECT_TRUE(pattern->Run("aab"));
+  EXPECT_FALSE(pattern->Run("abb"));
+  EXPECT_FALSE(pattern->Run("aabb"));
+  EXPECT_FALSE(pattern->Run("aaabb"));
+  EXPECT_FALSE(pattern->Run("ba"));
+  EXPECT_FALSE(pattern->Run("bba"));
+  EXPECT_FALSE(pattern->Run("baa"));
+  EXPECT_FALSE(pattern->Run("aba"));
+  EXPECT_FALSE(pattern->Run("bab"));
+  EXPECT_FALSE(pattern->Run("ac"));
+  EXPECT_FALSE(pattern->Run("ca"));
+  EXPECT_FALSE(pattern->Run("bc"));
+  EXPECT_FALSE(pattern->Run("cb"));
+}
+
+TEST_P(ParserTest, ChainQuantifiers) {
+  auto const status_or_pattern = Parse("a{3}b{2}");
+  EXPECT_OK(status_or_pattern);
+  auto const& pattern = status_or_pattern.value();
+  EXPECT_FALSE(pattern->Run(""));
+  EXPECT_FALSE(pattern->Run("a"));
+  EXPECT_FALSE(pattern->Run("aa"));
+  EXPECT_FALSE(pattern->Run("aaa"));
+  EXPECT_FALSE(pattern->Run("b"));
+  EXPECT_FALSE(pattern->Run("bb"));
+  EXPECT_FALSE(pattern->Run("bbb"));
+  EXPECT_FALSE(pattern->Run("c"));
+  EXPECT_FALSE(pattern->Run("cc"));
+  EXPECT_FALSE(pattern->Run("ab"));
+  EXPECT_FALSE(pattern->Run("aab"));
+  EXPECT_FALSE(pattern->Run("abb"));
+  EXPECT_FALSE(pattern->Run("aabb"));
+  EXPECT_TRUE(pattern->Run("aaabb"));
+  EXPECT_FALSE(pattern->Run("aaabbb"));
+  EXPECT_FALSE(pattern->Run("aaaabbb"));
   EXPECT_FALSE(pattern->Run("ba"));
   EXPECT_FALSE(pattern->Run("bba"));
   EXPECT_FALSE(pattern->Run("baa"));
